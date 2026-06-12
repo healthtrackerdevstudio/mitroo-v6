@@ -56,16 +56,24 @@
     <p class="login-subtitle" style="text-align:center;font-size:11px;color:#94a3b8;margin:0 0 16px">Τμήμα Τεχνικό</p>
     <div class="form-group">
       <label>Email</label>
-      <input class="form-control" id="l-user" type="email" placeholder="user@mitroo.gr" autocomplete="email">
+      <input class="form-control" id="l-user" type="email" placeholder="user@mitroo.gr" autocomplete="email"
+        oninput="document.getElementById('login-error').style.display='none'">
     </div>
     <div class="form-group">
       <label>Κωδικός</label>
-      <input class="form-control" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter') doLogin()">
+      <div style="position:relative">
+        <input class="form-control" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+          style="padding-right:40px"
+          oninput="document.getElementById('login-error').style.display='none'"
+          onkeydown="if(event.key==='Enter') doLogin()">
+        <button type="button" id="l-pass-toggle"
+          onclick="(function(){var i=document.getElementById('l-pass'),b=document.getElementById('l-pass-toggle');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁':'🙈';})()"
+          style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;padding:2px 4px;line-height:1">👁</button>
+      </div>
     </div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <button class="btn btn-primary btn-full login-btn" onclick="doLogin()">Είσοδος</button>
-    <p class="login-footer">© 2026 Η.Π. — v5.30</p>
+    <p class="login-footer">© 2026 Η.Π. — v6.0</p>
   </div>
 </div>
 
@@ -73,7 +81,7 @@
 <div id="app" style="display:none;flex-direction:column;width:100%;height:100vh;overflow:hidden">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v5.30</span></div>
+    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.0</span></div>
     <div class="topbar-spacer"></div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="topbar-btn" id="btn-backup-all" onclick="backupData()" title="Backup όλων των δεδομένων">💾 Backup</button>
@@ -1042,6 +1050,11 @@
       </div>
     </div>
     <div class="modal-footer">
+      <div class="modal-footer-left" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="navToProto(document.getElementById('if-fak').value)" title="Πρωτόκολλο αυτής της εγκατάστασης">📋 Πρωτόκολλο</button>
+        <button class="btn btn-secondary btn-sm" onclick="navToCerts(document.getElementById('if-fak').value)" title="Πιστοποιητικά αυτής της εγκατάστασης">📄 Πιστ/τικά</button>
+        <button class="btn btn-secondary btn-sm" onclick="navToEquip(document.getElementById('if-fak').value)" title="Εξοπλισμός αυτής της εγκατάστασης">🔧 Εξοπλισμός</button>
+      </div>
       <button class="btn btn-secondary" onclick="closeModal('modal-inst')">Άκυρο</button>
       <button class="btn btn-secondary" onclick="printInstReport(document.getElementById('if-fak').value)" title="Εκτύπωση αναφοράς εγκατάστασης">🖨️ Αναφορά</button>
       <button class="btn btn-primary" onclick="saveInst()">Αποθήκευση</button>
@@ -1135,6 +1148,11 @@
       </div>
     </div>
     <div class="modal-footer">
+      <div class="modal-footer-left" style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="navToInst(document.getElementById('pf-fak').value)" title="Εγκατάσταση">🏢 Εγκατάσταση</button>
+        <button class="btn btn-secondary btn-sm" onclick="navToCerts(document.getElementById('pf-fak').value)" title="Πιστοποιητικά">📄 Πιστ/τικά</button>
+        <button class="btn btn-secondary btn-sm" onclick="navToEquip(document.getElementById('pf-fak').value)" title="Εξοπλισμός">🔧 Εξοπλισμός</button>
+      </div>
       <button class="btn btn-secondary" onclick="closeModal('modal-proto')">Άκυρο</button>
       <button class="btn btn-primary" onclick="saveProto()">Αποθήκευση</button>
     </div>
@@ -1316,6 +1334,10 @@
       </div>
     </div>
     <div class="modal-footer">
+      <div class="modal-footer-left" style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="navToInst(document.getElementById('ef-fak').value)" title="Εγκατάσταση">🏢 Εγκατάσταση</button>
+        <button class="btn btn-secondary btn-sm" onclick="navToCerts(document.getElementById('ef-fak').value)" title="Πιστοποιητικά">📄 Πιστ/τικά</button>
+      </div>
       <button class="btn btn-secondary" onclick="closeModal('modal-equip')">Άκυρο</button>
       <button class="btn btn-primary" onclick="saveEquip()">Αποθήκευση</button>
     </div>
