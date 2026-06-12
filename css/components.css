@@ -1,0 +1,283 @@
+/* ════════════════════════════════════════════════════════════════════
+   v5.0 MODAL FIXES — added 2026-05-14
+   Targets: modal-inst, modal-proto, modal-equip, modal-cert
+   - Fixes transparent-background bug (HTML uses .modal but CSS had only .modal-box)
+   - Activates 2-column grid layout via .form-grid (was missing)
+   - Adds .ff full-width helper, .form-section box, .ac-list autocomplete
+   - Declares CSS variables referenced by inline styles throughout the file
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Design tokens — referenced by inline `var(--…)` styles in HTML */
+:root{
+  --primary:#1a3a6b;
+  --primary-dark:#0f2a5e;
+  --accent:#e8a020;
+  --accent-light:#fbbf24;
+  --border:#e2e8f0;
+  --border-soft:#f1f5f9;
+  --surface:#f8fafc;
+  --surface-2:#f0f4f8;
+  --text1:#1a1f2e;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --radius:7px;
+  --radius-lg:10px;
+  --radius-xl:12px;
+}
+
+/* Fix #1 — HTML uses class="modal", CSS only had .modal-box.
+   Apply the same rules to .modal so the inner box gets its
+   white background, max-width, and shadow back. */
+.modal-overlay > .modal,
+.modal-overlay > .modal-box{
+  background:#fff;
+  border-radius:12px;
+  width:100%;
+  max-width:780px;
+  box-shadow:0 24px 64px rgba(0,0,0,.18);
+  margin:auto;
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100vh - 40px);
+  overflow:hidden;
+}
+
+/* Per-modal widths — wider for content-heavy modals */
+#modal-inst  > .modal{max-width:880px}
+#modal-equip > .modal{max-width:940px}
+#modal-cert  > .modal{max-width:920px}
+#modal-proto > .modal{max-width:820px}
+
+/* Make .modal-body a normal block so the inner .form-grid
+   can own the 2-column layout (was previously fighting it).
+   Keep it scrollable so header+footer stay pinned. */
+.modal-body{
+  padding:18px;
+  display:block;
+  overflow-y:auto;
+  flex:1 1 auto;
+  min-height:0;
+}
+/* Legacy: any direct .full child of modal-body keeps full width */
+.modal-body > .full{width:100%}
+
+/* Fix #2 — the actual 2-column form grid */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px 16px;
+  align-items:start;
+}
+/* .ff = full-field (span both columns) */
+.form-grid > .ff,
+.form-grid > .full{grid-column:1 / -1}
+
+/* Conditional sub-sections (shown/hidden by JS via inline display)
+   should always span the full row of the form-grid when visible */
+.form-grid > #synergeia-rows,
+.form-grid > #plyntirio-rows,
+.form-grid > #vytio-row,
+.form-grid > #ikteo-row,
+.form-grid > #subtype-mikto-row,
+.form-grid > #subtype-row,
+.form-grid > #subtype-extras-row,
+.form-grid > #eq-ikteo-section,
+.form-grid > #eq-anyptotika-section{grid-column:1 / -1}
+
+/* Inside the sub-sections, give their form-groups a small 2-col grid too */
+#synergeia-rows,
+#plyntirio-rows{gap:12px}
+#synergeia-rows > .form-group,
+#plyntirio-rows > .form-group{margin-bottom:0}
+
+/* Fix #3 — Form section card (Αντλίες, Δεξαμενές, Πρόσθετος Εξοπλισμός) */
+.form-section{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:0;
+}
+.form-section-title{
+  font-size:11px;
+  font-weight:600;
+  color:#1a3a6b;
+  margin-bottom:10px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+/* When a .form-group is also a .form-section, drop the form-group margin */
+.form-group.form-section{margin-bottom:0}
+
+/* Fix #4 — Autocomplete dropdown (ΦΑΚ, Αιτών, Μηχανικός etc.) */
+.ac-wrap{position:relative}
+.ac-list{
+  position:absolute;
+  top:calc(100% + 2px);
+  left:0;
+  right:0;
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,.12);
+  max-height:220px;
+  overflow-y:auto;
+  z-index:60;
+  display:none;
+}
+.ac-list.show{display:block}
+.ac-list > div,
+.ac-list > a,
+.ac-list .ac-item{
+  padding:7px 11px;
+  font-size:13px;
+  color:#1a1f2e;
+  cursor:pointer;
+  border-bottom:1px solid #f1f5f9;
+  display:block;
+  text-decoration:none;
+  line-height:1.35;
+}
+.ac-list > div:last-child,
+.ac-list > a:last-child,
+.ac-list .ac-item:last-child{border-bottom:none}
+.ac-list > div:hover,
+.ac-list > a:hover,
+.ac-list .ac-item:hover{background:#f0f7ff;color:#1a3a6b}
+
+/* Modal title bar — small visual polish, gold underline accent */
+.modal-header{border-bottom-color:#e2e8f0}
+.modal-title{color:#1a3a6b}
+.modal-title::before{
+  content:"";
+  display:inline-block;
+  width:3px;
+  height:14px;
+  background:#e8a020;
+  border-radius:2px;
+  margin-right:6px;
+}
+
+/* Tighter form-group inside the new grid (it owns the gap now) */
+.form-grid > .form-group{margin-bottom:0}
+
+/* Textarea sizing inside modals */
+.modal-body textarea.form-control{min-height:64px;resize:vertical;font-family:inherit}
+
+/* Make sure select[multiple] stays inside its column */
+.form-grid select[multiple]{min-height:auto}
+
+/* Modal footer polish */
+.modal-footer{background:#fafbfc}
+
+/* Responsive: collapse to 1 column on narrow viewports */
+@media (max-width: 720px){
+  .form-grid{grid-template-columns:1fr}
+  #modal-inst  > .modal,
+  #modal-equip > .modal,
+  #modal-cert  > .modal,
+  #modal-proto > .modal{max-width:100%;width:100%}
+}
+
+/* ── Modal z-index above Leaflet (popupPane=700) ── */
+.modal-overlay{z-index:1100 !important}
+/* Note: Leaflet's internal pane z-indexes (tilePane 200 … popupPane 700)
+   are left untouched. Modal at 1100 sits cleanly above them. */
+
+/* ═══════════ END v5.0 MODAL FIXES ═══════════ */
+
+
+/* ════════════════════════════════════════════════════════════════════
+   v5.0 HOME (Αρχική) FIXES
+   - .stats-grid (HTML) ≠ .stat-grid (CSS) → grid never activated
+   - .stat-value/.stat-label (HTML) ≠ .stat-val/.stat-lbl (CSS)
+   - .stat-icon never defined
+   ──────────────────────────────────────────────────────────────────── */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  padding:18px;
+}
+.stats-grid .stat-card{
+  background:#fff;
+  border-radius:12px;
+  border:1px solid #e2e8f0;
+  padding:16px 18px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  text-align:left;
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+  cursor:default;
+}
+.stats-grid .stat-card:hover{
+  transform:translateY(-1px);
+  box-shadow:0 4px 14px rgba(15,30,60,.08);
+  border-color:#cbd5e1;
+}
+.stat-icon{
+  width:44px;
+  height:44px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  flex-shrink:0;
+  background:#f1f5f9;
+}
+.stat-icon.blue   {background:#dbeafe;color:#1e40af}
+.stat-icon.orange {background:#ffedd5;color:#9a3412}
+.stat-icon.green  {background:#dcfce7;color:#166534}
+.stat-icon.red    {background:#fee2e2;color:#991b1b}
+.stat-icon.purple {background:#ede9fe;color:#5b21b6}
+.stats-grid .stat-card > div:last-child{flex:1;min-width:0}
+.stat-value{
+  font-size:24px;
+  font-weight:600;
+  color:#1a1f2e;
+  line-height:1.1;
+  font-feature-settings:'tnum';
+}
+.stat-label{
+  font-size:11px;
+  color:#64748b;
+  margin-top:3px;
+  font-weight:500;
+  letter-spacing:0.3px;
+  text-transform:uppercase;
+}
+/* Gold left-accent on first card to echo the brand stripe */
+.stats-grid .stat-card:first-child{border-left:3px solid #e8a020}
+
+/* Recent protocol section on Home */
+.recent-section{background:#fff;border-top:1px solid #e2e8f0;margin-top:8px}
+.recent-header{
+  padding:12px 18px;
+  font-size:12px;
+  font-weight:600;
+  color:#1a3a6b;
+  border-bottom:1px solid #f1f5f9;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+}
+#recent-list{padding:6px 0}
+#recent-list .recent-item{
+  padding:9px 18px;
+  font-size:13px;
+  color:#374151;
+  border-bottom:1px solid #f1f5f9;
+  cursor:pointer;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  transition:background .12s;
+}
+#recent-list .recent-item:last-child{border-bottom:none}
+#recent-list .recent-item:hover{background:#f8fafc}
+/* ═══════════ END HOME FIXES ═══════════ */
+
