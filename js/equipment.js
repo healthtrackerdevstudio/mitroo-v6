@@ -201,7 +201,7 @@ function renderEquip(){
       : '<span class="eq-empty">—</span>';
 
     return `<tr class="clickable" onclick="openEquipModal('${esc(e.fak)}')" title="Κλικ για επεξεργασία">
-      <td class="mono"><strong>${esc(e.fak)}</strong></td>
+      <td class="mono"><strong>${esc(e.fak)}</strong> <button class="btn-icon" style="font-size:11px;padding:1px 4px;color:var(--primary);opacity:.7" onclick="event.stopPropagation();navToInst('${esc(e.fak)}')" title="Άνοιγμα εγκατάστασης">🏢</button></td>
       <td>${pumpsCell}</td>
       <td>${tanksCell}</td>
       <td style="text-align:center">${dianCell}</td>

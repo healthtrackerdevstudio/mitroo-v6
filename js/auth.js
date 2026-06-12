@@ -4,7 +4,9 @@ function doLogin(){
   const p=document.getElementById('l-pass').value;
   const errEl=document.getElementById('login-error');
   errEl.style.display='none';
-  if(!u||!p){ errEl.textContent='Συμπλήρωσε email και κωδικό'; errEl.style.display='block'; return; }
+  if(!u && !p){ errEl.textContent='Συμπλήρωσε email και κωδικό'; errEl.style.display='block'; return; }
+  if(!u){ errEl.textContent='Συμπλήρωσε το email'; errEl.style.display='block'; return; }
+  if(!p){ errEl.textContent='Συμπλήρωσε τον κωδικό'; errEl.style.display='block'; return; }
   // Firebase Auth mode
   if(USE_FIREBASE){
     if(!window.fbAuth){
@@ -550,3 +552,5 @@ function applyImportData(v2inst,v2proto,v2certs,v2equip){
     toast('Σφάλμα κατά τη μεταφορά: '+e.message,'error');
   }
 }
+
+

@@ -46,7 +46,7 @@ function renderCerts(){
     else
       statusBadge='<span class="badge badge-green">✅ Σε ισχύ ('+g.active+')</span>';
     return '<tr style="cursor:pointer" data-openfak="'+esc(g.fak)+'">'
-      +'<td class="mono"><strong>'+esc(g.fak)+'</strong></td>'
+      +'<td class="mono"><strong>'+esc(g.fak)+'</strong> <button class="btn-icon" style="font-size:11px;padding:1px 4px;color:var(--primary);opacity:.7" onclick="event.stopPropagation();navToInst(\''+esc(g.fak)+'\')" title="Άνοιγμα εγκατάστασης">🏢</button></td>'
       +'<td style="font-size:12px">'+esc(name)+'</td>'
       +'<td class="mono" style="text-align:center">'+g.total+'</td>'
       +'<td style="text-align:center">'+(g.expired>0?'<span style="color:#ef4444;font-weight:700">'+g.expired+'</span>':'<span class="muted">0</span>')+'</td>'
@@ -96,6 +96,8 @@ function openCertsFakModal(fak){
     +'<div><div style="font-size:16px;font-weight:700">'+esc(fak)+'</div>'
     +'<div style="font-size:12px;color:var(--text3)">'+esc(name)+'</div></div>'
     +'<div style="display:flex;gap:8px">'
+    +'<button class="btn btn-secondary btn-sm" onclick="closeCertsFakModal();navToInst(\''+esc(fak)+'\')" title="Εγκατάσταση">🏢 Εγκατάσταση</button>'
+    +'<button class="btn btn-secondary btn-sm" onclick="closeCertsFakModal();navToProto(\''+esc(fak)+'\')" title="Πρωτόκολλο">📋 Πρωτόκολλο</button>'
     +'<button class="btn btn-secondary btn-sm" onclick="printCertsFak()">🖨️ Εκτύπωση</button>'
     +'<button class="btn btn-primary btn-sm" data-addcertfak2="'+esc(fak)+'">➕ Προσθήκη</button>'
     +'<button class="modal-close" onclick="closeCertsFakModal()">✕</button>'

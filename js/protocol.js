@@ -224,7 +224,7 @@ function renderProto(){
                  p.hm_xreosis?`<span class="badge badge-gray">⬜ Προς Ενέργεια</span>`:
                  `<span class="badge badge-gray">Νέο</span>`;
     return `<tr class="${rowCls} clickable" onclick="openProtoModal('${p._id||''}')" title="Κλικ για επεξεργασία">
-      <td class="mono"><strong>${esc(p.fak)}</strong></td>
+      <td class="mono"><strong>${esc(p.fak)}</strong> <button class="btn-icon" style="font-size:11px;padding:1px 4px;color:var(--primary);opacity:.7" onclick="event.stopPropagation();navToInst('${esc(p.fak)}')" title="Άνοιγμα εγκατάστασης">🏢</button></td>
       <td class="mono muted">${esc(p.proto_eisx)}</td>
       <td class="mono">${fmtDate(p.hm_xreosis)}</td>
       <td>${esc(p.aition)}</td>
@@ -654,5 +654,37 @@ function deleteProto(id){
   save('proto',protocol);
   try{ updateBadges();renderProto();renderDash(); }catch(e){}
   toast('🗑 Κίνηση διαγράφηκε','info');
+}
+
+// ── Διαλειτουργικότητα: global navigation helpers ──────────────────
+
+// Από οποιαδήποτε σελίδα → modal εγκατάστασης
+function navToInst(fak){
+  showView('inst');
+  setTimeout(function(){ openInstModal(fak); }, 80);
+}
+
+// Από modal εγκατάστασης → πρωτόκολλο φιλτραρισμένο για τον ΦΑΚ
+function navToProto(fak){
+  closeModal('modal-inst');
+  showView('proto');
+  setTimeout(function(){
+    const s=document.getElementById('proto-search');
+    if(s){ s.value=fak; renderProto(); }
+  }, 80);
+}
+
+// Από modal εγκατάστασης → πιστοποιητικά για τον ΦΑΚ
+function navToCerts(fak){
+  closeModal('modal-inst');
+  showView('certs');
+  setTimeout(function(){ openCertsFakModal(fak); }, 80);
+}
+
+// Από modal εγκατάστασης → εξοπλισμός για τον ΦΑΚ
+function navToEquip(fak){
+  closeModal('modal-inst');
+  showView('equip');
+  setTimeout(function(){ openEquipModal(fak); }, 80);
 }
 

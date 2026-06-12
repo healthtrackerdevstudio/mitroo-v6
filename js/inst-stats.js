@@ -85,7 +85,7 @@ function renderInstStats(){
     if(eq.offset_filling) equipBadges.push('Offset');
     if(eq.auto_politis) equipBadges.push('Αυτ.Πωλητής');
     if(eq.lakkos) equipBadges.push('Λάκκος');
-    return '<tr class="clickable">'
+    return '<tr class="clickable" onclick="instStatsOpenInst(\''+esc(i.fak)+'\')" title="Κλικ → Επεξεργασία εγκατάστασης">'
       +'<td class="mono"><strong>'+esc(i.fak)+'</strong></td>'
       +'<td>'+esc(i.name)+'</td>'
       +'<td>'+esc(i.topothesia||'')+'</td>'
@@ -235,10 +235,18 @@ function printInstReport(fak){
   }).join('')+'</div>');
   win.document.write('<strong>Δεξαμενές:</strong>'+tanksHtml);
   win.document.write('<h2>📄 Πιστοποιητικά</h2>'+certsHtml);
-  win.document.write('<div class="footer">© Τεχνικό Τμήμα Μεταφορών — ΠΕ Ανατολικής Αττικής — Μητρώο Πρατηρίων v5.30</div>');
+  win.document.write('<div class="footer">© Τεχνικό Τμήμα Μεταφορών — ΠΕ Ανατολικής Αττικής — Μητρώο Πρατηρίων v6.0</div>');
   win.document.write('</body></html>');
   win.document.close();
   win.focus();
   setTimeout(function(){win.print();},500);
+}
+
+// ── Διαλειτουργικότητα: από Στατιστικά Εγκ. → modal επεξεργασίας ──
+function instStatsOpenInst(fak){
+  // Πήγαινε στην καρτέλα Εγκαταστάσεις και άνοιξε το modal
+  showView('inst');
+  // Μικρό delay ώστε το view να γίνει visible πριν ανοίξει το modal
+  setTimeout(function(){ openInstModal(fak); }, 80);
 }
 
