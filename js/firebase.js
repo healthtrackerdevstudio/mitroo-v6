@@ -118,6 +118,5 @@ function fbListen(collection, callback){
 }
 
 
-const KEYS={inst:'otp3_inst',proto:'otp3_proto',certs:'otp3_certs',equip:'otp3_equip',nomos:'otp3_nomos'};
-const CREDS={user:'admin',pass:'protocol2024'};
+// KEYS και CREDS ορίζονται στο config.js
 

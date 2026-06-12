@@ -211,5 +211,3 @@ function nomosPathFallback(text){
   catch(e){toast('Αδυναμία αντιγραφής','error');}
   document.body.removeChild(ta);
 }
-
-</script>

@@ -115,16 +115,6 @@ const MiniDocGen = {
     return res;
   }
 };
-</script>
-
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-</head>
-<body>
-
 
 // ══ DOC GENERATOR ══
 const DG_KOIN_KEY='docgen_koinopoiiseis';
