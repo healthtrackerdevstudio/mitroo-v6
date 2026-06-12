@@ -28,7 +28,17 @@ function doLogin(){
         afterLogin(username);
       })
       .catch(function(err){
-        errEl.textContent='Λάθος email ή κωδικός';
+        console.error('Firebase Auth error:', err.code, err.message);
+        const msgs={
+          'auth/user-not-found':'Ο χρήστης δεν υπάρχει στο Firebase Authentication.',
+          'auth/wrong-password':'Λάθος κωδικός.',
+          'auth/invalid-email':'Μη έγκυρο email.',
+          'auth/invalid-credential':'Λάθος email ή κωδικός.',
+          'auth/too-many-requests':'Πολλές αποτυχημένες προσπάθειες. Δοκίμασε αργότερα.',
+          'auth/network-request-failed':'Πρόβλημα σύνδεσης δικτύου.',
+          'auth/operation-not-allowed':'Η email/password σύνδεση δεν είναι ενεργοποιημένη στο Firebase.',
+        };
+        errEl.textContent = msgs[err.code] || ('Σφάλμα: '+err.code);
         errEl.style.display='block';
         if(btn){btn.disabled=false;btn.textContent='Είσοδος';}
       });
@@ -540,5 +550,3 @@ function applyImportData(v2inst,v2proto,v2certs,v2equip){
     toast('Σφάλμα κατά τη μεταφορά: '+e.message,'error');
   }
 }
-
-
