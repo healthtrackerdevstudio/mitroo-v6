@@ -244,9 +244,8 @@ function printInstReport(fak){
 
 // ── Διαλειτουργικότητα: από Στατιστικά Εγκ. → modal επεξεργασίας ──
 function instStatsOpenInst(fak){
-  // Πήγαινε στην καρτέλα Εγκαταστάσεις και άνοιξε το modal
+  closeAllModals();
   showView('inst');
-  // Μικρό delay ώστε το view να γίνει visible πριν ανοίξει το modal
   setTimeout(function(){ openInstModal(fak); }, 80);
 }
 

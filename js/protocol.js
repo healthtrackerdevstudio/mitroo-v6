@@ -658,15 +658,30 @@ function deleteProto(id){
 
 // ── Διαλειτουργικότητα: global navigation helpers ──────────────────
 
+// Κλείνει ΟΛΑ τα ανοιχτά modals (static + dynamic overlays)
+function closeAllModals(){
+  // Static modal-overlays
+  ['modal-inst','modal-proto','modal-cert','modal-equip',
+   'modal-confirm','modal-cleanup','modal-peprag'].forEach(function(id){
+    closeModal(id);
+  });
+  // Dynamic overlay (cert FAK panel)
+  const dynOverlay=document.getElementById('certs-fak-overlay');
+  if(dynOverlay) dynOverlay.remove();
+}
+
 // Από οποιαδήποτε σελίδα → modal εγκατάστασης
 function navToInst(fak){
+  if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
+  closeAllModals();
   showView('inst');
   setTimeout(function(){ openInstModal(fak); }, 80);
 }
 
-// Από modal εγκατάστασης → πρωτόκολλο φιλτραρισμένο για τον ΦΑΚ
+// Από modal → πρωτόκολλο φιλτραρισμένο για τον ΦΑΚ
 function navToProto(fak){
-  closeModal('modal-inst');
+  if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
+  closeAllModals();
   showView('proto');
   setTimeout(function(){
     const s=document.getElementById('proto-search');
@@ -674,16 +689,18 @@ function navToProto(fak){
   }, 80);
 }
 
-// Από modal εγκατάστασης → πιστοποιητικά για τον ΦΑΚ
+// Από modal → πιστοποιητικά για τον ΦΑΚ
 function navToCerts(fak){
-  closeModal('modal-inst');
+  if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
+  closeAllModals();
   showView('certs');
   setTimeout(function(){ openCertsFakModal(fak); }, 80);
 }
 
-// Από modal εγκατάστασης → εξοπλισμός για τον ΦΑΚ
+// Από modal → εξοπλισμός για τον ΦΑΚ
 function navToEquip(fak){
-  closeModal('modal-inst');
+  if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
+  closeAllModals();
   showView('equip');
   setTimeout(function(){ openEquipModal(fak); }, 80);
 }
