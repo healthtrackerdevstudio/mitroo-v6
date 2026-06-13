@@ -12,6 +12,8 @@ function getInstFiltered(){
   else if(fSheet==='exes') arr=arr.filter(i=>i.type==='ΕΧΕΣ');
   if(fTypes.length>0) arr=arr.filter(i=>fTypes.includes(i.type));
   if(fCat) arr=arr.filter(i=>i.cat===fCat);
+  // Φίλτρο ανάκληση/σφράγιση (από dashboard card 🔒)
+  if(window._instLockFilter){ arr=arr.filter(i=>i.sfragisi||i.anaklisi); }
   const{col,dir}=sortState.inst;
   arr.sort((a,b)=>(a[col]||'').localeCompare(b[col]||'')*dir);
   return arr;

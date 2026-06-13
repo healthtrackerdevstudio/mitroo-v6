@@ -25,6 +25,29 @@ function renderDash(){
   }).filter(d=>d!==null);
   const avgAll=allDays.length?Math.round(allDays.reduce((a,b)=>a+b,0)/allDays.length):null;
   document.getElementById('s-avg-days').textContent=avgAll!==null?avgAll+'':'—';
+
+  // ── Ανά τύπο εγκατάστασης ──
+  const FUEL=['Πρατήριο Υγρών Καυσίμων','Μικτό Πρατήριο','Πρατήριο ΙΧ Container'];
+  const STATHMOI=['Στεγασμένος Σταθμός','Υπαίθριος Σταθμός'];
+  const pratires=installations.filter(i=>FUEL.includes(i.type)).length;
+  const synergia=installations.filter(i=>i.type==='Συνεργείο').length;
+  const plynteria=installations.filter(i=>i.type==='Πλυντήριο'||i.type==='Λιπαντήριο').length;
+  const stathmoi=installations.filter(i=>STATHMOI.includes(i.type)).length;
+  const ikteo=installations.filter(i=>i.type==='ΙΚΤΕΟ').length;
+  const locked=installations.filter(i=>i.sfragisi||i.anaklisi).length;
+  const setV=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setV('s-inst-pratires',pratires);
+  setV('s-inst-synergia',synergia);
+  setV('s-inst-plynteria',plynteria);
+  setV('s-inst-stathmoi',stathmoi);
+  setV('s-inst-ikteo',ikteo);
+  setV('s-inst-lock',locked);
+  // Χρώμα στο lock card: κόκκινο αν >0
+  const lockCard=document.querySelector('[id="s-inst-lock"]');
+  if(lockCard){
+    const card=lockCard.closest('.stat-card');
+    if(card) card.style.outline=locked>0?'2px solid #dc2626':'';
+  }
   // Τελευταίες 10 κινήσεις
   const recent=[...protocol].sort((a,b)=>(b.hm_xreosis||'').localeCompare(a.hm_xreosis||'')).slice(0,10);
   const rl=document.getElementById('recent-list');

@@ -705,3 +705,17 @@ function navToEquip(fak){
   setTimeout(function(){ openEquipModal(fak); }, 80);
 }
 
+// Από dashboard card → εγκαταστάσεις με φίλτρο
+function navToInstFiltered(filter){
+  closeAllModals();
+  showView('inst');
+  setTimeout(function(){
+    if(filter==='lock'){
+      // Εφαρμόζει κρυφό φίλτρο: μόνο ανάκληση/σφράγιση
+      window._instLockFilter=true;
+      renderInst();
+      toast('🔒 Εμφανίζονται μόνο εγκαταστάσεις σε ανάκληση/σφράγιση','info');
+    }
+  }, 80);
+}
+
