@@ -34,14 +34,15 @@ function showView(v){
 
 // ══ BADGES ══
 function updateBadges(){
-  document.getElementById('badge-inst').textContent=installations.length;
-  document.getElementById('badge-proto').textContent=protocol.length;
-  document.getElementById('badge-certs').textContent=certificates.length;
-  document.getElementById('badge-equip').textContent=equipment.length;
-  document.getElementById('badge-nomos').textContent=nomosIndex.length;
-  document.getElementById('s-inst').textContent=installations.length;
-  document.getElementById('s-proto').textContent=protocol.length;
-  document.getElementById('s-certs').textContent=certificates.length;
-  document.getElementById('s-equip').textContent=equipment.length;
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  sv('badge-inst',installations.length);
+  sv('badge-proto',protocol.length);
+  sv('badge-certs',certificates.length);
+  sv('badge-equip',equipment.length);
+  sv('badge-nomos',nomosIndex.length);
+  // s-inst αφαιρέθηκε — τα ανά-τύπο cards ενημερώνονται από renderDash
+  sv('s-proto',protocol.length);
+  sv('s-certs',certificates.length);
+  sv('s-equip',equipment.length);
 }
 
