@@ -130,7 +130,12 @@
 
       <!-- Κύρια στατιστικά -->
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon blue">🏢</div><div><div class="stat-value" id="s-inst">0</div><div class="stat-label">Εγκαταστάσεις</div></div></div>
+        <div class="stat-card clickable" onclick="showView('inst')" title="Πρατήρια Καυσίμων"><div class="stat-icon blue">⛽</div><div><div class="stat-value" id="s-inst-pratires">0</div><div class="stat-label">Πρατήρια</div></div></div>
+        <div class="stat-card clickable" onclick="showView('inst')" title="Συνεργεία"><div class="stat-icon orange">🔧</div><div><div class="stat-value" id="s-inst-synergia">0</div><div class="stat-label">Συνεργεία</div></div></div>
+        <div class="stat-card clickable" onclick="showView('inst')" title="Πλυντήρια / Λιπαντήρια"><div class="stat-icon blue">🚿</div><div><div class="stat-value" id="s-inst-plynteria">0</div><div class="stat-label">Πλυντ./Λιπαντ.</div></div></div>
+        <div class="stat-card clickable" onclick="showView('inst')" title="Σταθμοί Αυτοκινήτων"><div class="stat-icon purple">🅿️</div><div><div class="stat-value" id="s-inst-stathmoi">0</div><div class="stat-label">Σταθμοί</div></div></div>
+        <div class="stat-card clickable" onclick="showView('inst')" title="ΙΚΤΕΟ"><div class="stat-icon green">🔍</div><div><div class="stat-value" id="s-inst-ikteo">0</div><div class="stat-label">ΙΚΤΕΟ</div></div></div>
+        <div class="stat-card clickable" onclick="navToInstFiltered('lock')" title="Σε ανάκληση ή σφράγιση"><div class="stat-icon red">🔒</div><div><div class="stat-value" id="s-inst-lock">0</div><div class="stat-label">Ανάκληση/Σφράγιση</div></div></div>
         <div class="stat-card"><div class="stat-icon orange">📋</div><div><div class="stat-value" id="s-proto">0</div><div class="stat-label">Κινήσεις Πρωτοκόλλου</div></div></div>
         <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-value" id="s-proto-done">0</div><div class="stat-label">Υπογεγραμμένο</div></div></div>
         <div class="stat-card"><div class="stat-icon blue">🔵</div><div><div class="stat-value" id="s-proto-phase2">0</div><div class="stat-label">Προς Υπογραφές</div></div></div>
@@ -235,13 +240,13 @@
     <div class="view" id="view-inst">
       <div class="toolbar">
         <span class="toolbar-title">Εγκαταστάσεις</span>
-        <div class="search-box"><span class="search-icon">🔍</span><input id="inst-search" placeholder="ΦΑΚ, επωνυμία, περιοχή, διεύθυνση…" oninput="debouncedRenderInst()" onkeydown="clearOnEsc(this,'renderInst')"></div>
+        <div class="search-box"><span class="search-icon">🔍</span><input id="inst-search" placeholder="ΦΑΚ, επωνυμία, περιοχή, διεύθυνση…" oninput="window._instLockFilter=false;debouncedRenderInst()" onkeydown="clearOnEsc(this,'renderInst')"></div>
         <select class="filter-select" id="inst-f-sheet" onchange="renderInst()">
           <option value="">Εγκ. &amp; ΕΧΕΣ</option>
           <option value="inst">Εγκαταστάσεις</option>
           <option value="exes">Αυτοκίνητα — ΕΧΕΣ</option>
         </select>
-        <select class="filter-select" id="inst-f-type" onchange="renderInst()">
+        <select class="filter-select" id="inst-f-type" onchange="window._instLockFilter=false;renderInst()">
           <option value="">Όλοι τύποι</option>
           <option>Πρατήριο Υγρών Καυσίμων</option>
           <option>Μικτό Πρατήριο</option>
@@ -253,7 +258,7 @@
           <option>Λιπαντήριο</option>
           <option>ΙΚΤΕΟ</option>
         </select>
-        <select class="filter-select" id="inst-f-cat" onchange="renderInst()">
+        <select class="filter-select" id="inst-f-cat" onchange="window._instLockFilter=false;renderInst()">
           <option value="">Όλες Κατηγορίες</option>
           <option>ΔΧ</option>
           <option>ΙΧ</option>
