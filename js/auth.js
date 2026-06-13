@@ -294,6 +294,8 @@ function afterLogin(username){
     }, 500);
   }
   loadData();
+  // Αρχικοποίηση index νομοθεσίας (φορτώνει από Firestore/localStorage)
+  setTimeout(function(){ if(typeof nomosInit==='function') nomosInit(); }, 800);
 }
 
 function doLogout(){

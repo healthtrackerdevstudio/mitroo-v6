@@ -39,10 +39,11 @@ function updateBadges(){
   sv('badge-proto',protocol.length);
   sv('badge-certs',certificates.length);
   sv('badge-equip',equipment.length);
-  sv('badge-nomos',nomosIndex.length);
-  // s-inst αφαιρέθηκε — τα ανά-τύπο cards ενημερώνονται από renderDash
+  sv('badge-nomos',(typeof nomosIndex!=='undefined'?nomosIndex.length:0));
   sv('s-proto',protocol.length);
   sv('s-certs',certificates.length);
   sv('s-equip',equipment.length);
+  // Ενημέρωση stats bar νομοθεσίας
+  if(typeof nomosUpdateStats==='function') nomosUpdateStats();
 }
 

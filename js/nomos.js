@@ -1,213 +1,468 @@
-// ══ ΝΟΜΟΘΕΣΙΑ ══
+// ══ ΝΟΜΟΘΕΣΙΑ v6 — Auto-indexing + AI Search ══
 
-function importNomosIndex(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
+// ── State ──
+let nomosIndex = [];           // [{id,filename,path,cat,subcat,snippet,score,indexed_at}]
+let nomosIndexing = false;
+let nomosIndexHandle = null;   // FileSystemDirectoryHandle
+let nomosSearchResults = [];
+let nomosAiPending = false;
+const NOMOS_GEMINI_KEY_STORE = 'nomos_gemini_key';
+const NOMOS_INDEX_STORE = 'nomos_index_v6';
+const NOMOS_BATCH = 40;        // αρχεία ανά batch
+
+// ── Gemini key (αποθηκεύεται local) ──
+function getNomosGeminiKey(){
+  return localStorage.getItem(NOMOS_GEMINI_KEY_STORE)||'';
+}
+function setNomosGeminiKey(k){
+  localStorage.setItem(NOMOS_GEMINI_KEY_STORE, k.trim());
+}
+
+// ── Load/Save index (Firestore ή localStorage) ──
+async function nomosLoadIndex(){
+  // Προσπάθεια από Firestore πρώτα
+  if(USE_FIREBASE && db){
     try{
-      const data=JSON.parse(e.target.result);
-      if(!Array.isArray(data)){toast('Μη έγκυρο αρχείο index','error');return;}
-      nomosIndex=data;
-      save('nomos',nomosIndex);
-      populateNomosFilters();
-      renderNomos();
-      updateBadges();
-      toast('Εισήχθησαν '+nomosIndex.length+' εγγραφές νομοθεσίας','success');
-    }catch(err){toast('Σφάλμα ανάγνωσης JSON: '+err.message,'error');}
-  };
-  reader.readAsText(file,'utf-8');
-  input.value='';
-}
-
-
-// ══ ΝΟΜΟΘΕΣΙΑ: Import/Export ══
-
-// Import κοινού index (admin → Firebase, όλοι βλέπουν)
-function importNomosShared(input){
-  if(_serverRole==='guest'){ toast('⛔ Δεν έχεις δικαίωμα','error'); return; }
-  const file=input.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=JSON.parse(e.target.result);
-      const arr=Array.isArray(data)?data:(data.nomos||data.items||data.nomosIndex||[]);
-      if(!arr.length){ toast('Δεν βρέθηκαν εγγραφές νομοθεσίας','error'); return; }
-      nomosIndex=arr;
-      save('nomos',nomosIndex);
-      // Αποθήκευση στο Firebase αν είμαστε online
-      if(USE_FIREBASE && db){
-        fbSave('nomos', nomosIndex).then(function(){
-          toast('✅ Index νομοθεσίας ανέβηκε στο Firebase ('+arr.length+' εγγραφές)','success');
-        });
-      } else {
-        toast('✅ Index νομοθεσίας φορτώθηκε ('+arr.length+' εγγραφές)','success');
-      }
-      populateNomosFilters(); renderNomos();
-    }catch(err){ toast('❌ '+err.message,'error'); }
-  };
-  reader.readAsText(file);
-  input.value='';
-}
-
-// Import προσωπικής λίστας (localStorage μόνο)
-function importNomosPersonal(input){
-  const file=input.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=JSON.parse(e.target.result);
-      const arr=Array.isArray(data)?data:(data.nomos||data.items||data.nomosIndex||[]);
-      if(!arr.length){ toast('Δεν βρέθηκαν εγγραφές','error'); return; }
-      // Αποθήκευση στο localStorage με ξεχωριστό key
-      const fbEmail=sessionStorage.getItem('fb_email')||'local';
-      const personalKey='nomos_personal_'+fbEmail.replace(/[@.]/g,'_');
-      localStorage.setItem(personalKey, JSON.stringify(arr));
-      // Συγχώνευση με το κοινό index
-      const combined=[...nomosIndex,...arr];
-      // Απόκρυψη διπλότυπων βάσει _id
-      const seen=new Set();
-      const unique=combined.filter(function(x){ 
-        const k=x._id||x.id||(x.title+x.fek); 
-        if(seen.has(k)) return false; 
-        seen.add(k); return true; 
-      });
-      nomosIndex=unique;
-      toast('✅ Προσωπική λίστα φορτώθηκε ('+arr.length+' εγγραφές, σύνολο: '+unique.length+')','success');
-      populateNomosFilters(); renderNomos();
-    }catch(err){ toast('❌ '+err.message,'error'); }
-  };
-  reader.readAsText(file);
-  input.value='';
-}
-
-// Export προσωπικής λίστας
-function exportNomosPersonal(){
-  const fbEmail=sessionStorage.getItem('fb_email')||'local';
-  const personalKey='nomos_personal_'+fbEmail.replace(/[@.]/g,'_');
-  const personal=JSON.parse(localStorage.getItem(personalKey)||'[]');
-  if(!personal.length){ toast('Δεν υπάρχει προσωπική λίστα νομοθεσίας','error'); return; }
-  const blob=new Blob([JSON.stringify(personal,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='nomos_personal_'+fbEmail.split('@')[0]+'.json';
-  a.click();
-  toast('✅ Εξαγωγή προσωπικής λίστας ('+personal.length+' εγγραφές)');
-}
-
-function populateNomosFilters(){
-  const fSel=document.getElementById('nomos-f-folder');
-  if(fSel){
-    const folders=[...new Set(nomosIndex.map(function(n){return n.folder;}).filter(Boolean))].sort();
-    fSel.innerHTML='<option value="">Όλοι οι φάκελοι</option>';
-    folders.forEach(function(f){const o=document.createElement('option');o.value=f;o.textContent=f;fSel.appendChild(o);});
+      const snap = await db.collection('nomosIndex').doc('v6').get();
+      if(snap.exists){ nomosIndex = snap.data().items||[]; return; }
+    }catch(e){}
   }
-  const ySel=document.getElementById('nomos-f-year');
-  if(ySel){
-    const years=[...new Set(nomosIndex.map(function(n){return n.year;}).filter(function(y){return y&&y.length===4;}))].sort(function(a,b){return b-a;});
-    ySel.innerHTML='<option value="">Όλα τα έτη</option>';
-    years.forEach(function(y){const o=document.createElement('option');o.value=y;o.textContent=y;ySel.appendChild(o);});
+  // Fallback: localStorage
+  try{
+    const raw = localStorage.getItem(NOMOS_INDEX_STORE);
+    if(raw) nomosIndex = JSON.parse(raw);
+  }catch(e){}
+}
+
+async function nomosSaveIndex(){
+  // localStorage πάντα (γρήγορο)
+  try{ localStorage.setItem(NOMOS_INDEX_STORE, JSON.stringify(nomosIndex)); }catch(e){}
+  // Firestore αν διαθέσιμο
+  if(USE_FIREBASE && db){
+    try{ await db.collection('nomosIndex').doc('v6').set({items: nomosIndex, updated: Date.now()}); }
+    catch(e){ console.warn('Firestore save failed:', e); }
+  }
+}
+
+// ── Εξαγωγή κατηγορίας από path ──
+function nomosPathToCategory(path){
+  const parts = path.replace(/\\/g,'/').split('/').filter(Boolean);
+  return {
+    cat:    parts[0]||'',
+    subcat: parts[1]||'',
+    subcat2:parts[2]||''
+  };
+}
+
+// ── Εξαγωγή μεταδεδομένων από filename ──
+function nomosMetaFromFilename(filename){
+  const name = filename.replace(/\.(pdf|docx|doc)$/i,'');
+  // Τύπος εγγράφου
+  let type = 'Άλλο';
+  if(/\bΝ\.?\s*\d|νόμος/i.test(name)) type='Νόμος';
+  else if(/\bΠΔ\b|Π\.Δ\./i.test(name)) type='ΠΔ';
+  else if(/\bΥΑ\b|ΥΠ\.?ΑΠ|Υπουργ.*Απόφ/i.test(name)) type='ΥΑ';
+  else if(/\bΦΕΚ\b/i.test(name)) type='ΦΕΚ';
+  else if(/εγκύκλ|circular/i.test(name)) type='Εγκύκλιος';
+  else if(/οδηγία|directive/i.test(name)) type='Οδηγία ΕΕ';
+  // Έτος
+  const yearMatch = name.match(/\b(19[89]\d|20[012]\d)\b/);
+  const year = yearMatch ? yearMatch[1] : '';
+  return {type, year, title: name};
+}
+
+// ── PDF text extraction (readable only) ──
+async function nomosExtractPdfText(file){
+  try{
+    const arrayBuffer = await file.arrayBuffer();
+    // Χρησιμοποιεί pdf.js αν διαθέσιμο
+    if(window.pdfjsLib){
+      const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+      let text = '';
+      const maxPages = Math.min(pdf.numPages, 3); // πρώτες 3 σελίδες
+      for(let i=1; i<=maxPages; i++){
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(s=>s.str).join(' ') + '\n';
+      }
+      return text.trim().slice(0,2000); // max 2000 chars
+    }
+  }catch(e){}
+  return '';
+}
+
+// ── DOCX text extraction (mammoth.js) ──
+async function nomosExtractDocxText(file){
+  try{
+    if(window.mammoth){
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({arrayBuffer});
+      return (result.value||'').slice(0,2000);
+    }
+  }catch(e){}
+  return '';
+}
+
+// ── Hash για unique ID ──
+function nomosHash(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){ h=(Math.imul(31,h)+str.charCodeAt(i))|0; }
+  return Math.abs(h).toString(36);
+}
+
+// ── ΚΥΡΙΑ ΣΥΝΑΡΤΗΣΗ INDEXING ──
+async function nomosStartIndexing(){
+  if(nomosIndexing){ toast('Το indexing τρέχει ήδη','info'); return; }
+
+  // Επιλογή φακέλου
+  try{
+    nomosIndexHandle = await window.showDirectoryPicker({mode:'read'});
+  }catch(e){
+    if(e.name!=='AbortError') toast('Σφάλμα επιλογής φακέλου','error');
+    return;
+  }
+
+  nomosIndexing = true;
+  nomosUpdateIndexUI('running');
+
+  const allFiles = [];
+  await nomosCollectFiles(nomosIndexHandle, '', allFiles);
+
+  const total = allFiles.length;
+  let done = 0;
+  let newCount = 0;
+  const existingIds = new Set(nomosIndex.map(e=>e.id));
+
+  nomosSetProgress(0, total, 'Σάρωση αρχείων…');
+
+  for(let i=0; i<allFiles.length; i+=NOMOS_BATCH){
+    if(!nomosIndexing) break; // pause/stop
+
+    const batch = allFiles.slice(i, i+NOMOS_BATCH);
+    for(const {file, relPath} of batch){
+      const id = nomosHash(relPath);
+
+      // Skip αν ήδη indexed (εκτός αν force refresh)
+      if(existingIds.has(id)){ done++; continue; }
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      let snippet = '';
+
+      if(ext==='pdf') snippet = await nomosExtractPdfText(file);
+      else if(ext==='docx'||ext==='doc') snippet = await nomosExtractDocxText(file);
+
+      const {cat, subcat, subcat2} = nomosPathToCategory(relPath);
+      const {type, year, title} = nomosMetaFromFilename(file.name);
+
+      nomosIndex.push({
+        id, filename: file.name, path: relPath,
+        cat, subcat, subcat2,
+        title, type, year,
+        snippet,
+        score: 0,           // feedback score
+        indexed_at: Date.now()
+      });
+      existingIds.add(id);
+      newCount++;
+      done++;
+    }
+
+    nomosSetProgress(done, total, `${done} / ${total} αρχεία…`);
+
+    // Αποθήκευση κάθε batch
+    await nomosSaveIndex();
+    // Yield για να μην παγώσει ο browser
+    await new Promise(r=>setTimeout(r,10));
+  }
+
+  nomosIndexing = false;
+  nomosUpdateIndexUI('done');
+  nomosSetProgress(total, total, `✅ Ολοκληρώθηκε! ${newCount} νέα αρχεία indexed (σύνολο: ${nomosIndex.length})`);
+  populateNomosFilters();
+  renderNomos();
+  updateBadges();
+  toast(`✅ Index: ${nomosIndex.length} αρχεία`,'success');
+}
+
+// ── Recursive file collector ──
+async function nomosCollectFiles(dirHandle, relPath, results){
+  for await(const [name, handle] of dirHandle){
+    const childPath = relPath ? relPath+'/'+name : name;
+    if(handle.kind==='directory'){
+      await nomosCollectFiles(handle, childPath, results);
+    } else if(/\.(pdf|docx|doc)$/i.test(name)){
+      try{
+        const file = await handle.getFile();
+        results.push({file, relPath: childPath});
+      }catch(e){}
+    }
+  }
+}
+
+// ── Stop indexing ──
+function nomosStopIndexing(){
+  nomosIndexing = false;
+  nomosUpdateIndexUI('stopped');
+  toast('Indexing διακόπηκε — αποθηκεύτηκε η πρόοδος','info');
+}
+
+// ── Clear index ──
+async function nomosClearIndex(){
+  if(!confirm(`Διαγραφή όλου του index (${nomosIndex.length} εγγραφές); Δεν αναιρείται.`)) return;
+  nomosIndex = [];
+  await nomosSaveIndex();
+  renderNomos();
+  updateBadges();
+  toast('Index διαγράφηκε','info');
+}
+
+// ── Progress UI ──
+function nomosSetProgress(done, total, msg){
+  const bar = document.getElementById('nomos-progress-bar');
+  const txt = document.getElementById('nomos-progress-txt');
+  if(!bar||!txt) return;
+  const pct = total>0 ? Math.round(done/total*100) : 0;
+  bar.style.width = pct+'%';
+  txt.textContent = msg;
+}
+
+function nomosUpdateIndexUI(state){
+  const btnStart = document.getElementById('nomos-btn-index');
+  const btnStop  = document.getElementById('nomos-btn-stop');
+  const btnClear = document.getElementById('nomos-btn-clear');
+  const wrap     = document.getElementById('nomos-progress-wrap');
+  if(!btnStart) return;
+  if(state==='running'){
+    btnStart.disabled=true; btnStart.textContent='⏳ Indexing…';
+    if(btnStop) btnStop.style.display='';
+    if(wrap) wrap.style.display='';
+  } else {
+    btnStart.disabled=false; btnStart.textContent='📂 Επιλογή φακέλου & Index';
+    if(btnStop) btnStop.style.display='none';
+  }
+}
+
+// ══ AI ΑΝΑΖΗΤΗΣΗ (Gemini) ══
+
+async function nomosAiSearch(query, candidates){
+  const key = getNomosGeminiKey();
+  if(!key) return null;
+  const prompt = `Έχεις τα παρακάτω νομικά αρχεία (JSON). Ο χρήστης ψάχνει: "${query}".
+Επέστρεψε ΜΟΝΟ JSON array με τα ids των 3 πιο σχετικών αρχείων, με σειρά σχετικότητας.
+Αρχεία:
+${JSON.stringify(candidates.map(c=>({id:c.id,title:c.title,path:c.path,snippet:c.snippet?.slice(0,300)})))}
+Απάντηση (ΜΟΝΟ JSON array of ids, πχ ["abc","def","ghi"]):`;
+
+  try{
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}],
+        generationConfig:{temperature:0,maxOutputTokens:200}})
+    });
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    const match = text.match(/\[.*\]/s);
+    if(match) return JSON.parse(match[0]);
+  }catch(e){ console.warn('Gemini error:',e); }
+  return null;
+}
+
+// ── Keyword search (local, γρήγορο) ──
+function nomosKeywordSearch(query){
+  const words = query.toLowerCase().split(/\s+/).filter(w=>w.length>2);
+  if(!words.length) return [...nomosIndex];
+  return nomosIndex.filter(e=>{
+    const haystack = (e.title+' '+e.filename+' '+e.path+' '+e.snippet+' '+e.cat+' '+e.subcat).toLowerCase();
+    return words.some(w=>haystack.includes(w));
+  });
+}
+
+async function nomosDoSearch(){
+  const q = (document.getElementById('nomos-search')||{value:''}).value.trim();
+  const fCat = (document.getElementById('nomos-f-folder')||{value:''}).value;
+  const fSub = (document.getElementById('nomos-f-sub')||{value:''}).value;
+  const fType = (document.getElementById('nomos-f-type')||{value:''}).value;
+  const fYear = (document.getElementById('nomos-f-year')||{value:''}).value;
+
+  let results = [...nomosIndex];
+  if(fCat)  results = results.filter(e=>e.cat===fCat);
+  if(fSub)  results = results.filter(e=>e.subcat===fSub);
+  if(fType) results = results.filter(e=>e.type===fType);
+  if(fYear) results = results.filter(e=>e.year===fYear);
+
+  if(q){
+    // Keyword φίλτρο πρώτα
+    results = nomosKeywordSearch(q).filter(e=>
+      (!fCat||e.cat===fCat)&&(!fSub||e.subcat===fSub)&&
+      (!fType||e.type===fType)&&(!fYear||e.year===fYear)
+    );
+
+    // AI reranking αν έχουμε Gemini key και >5 αποτελέσματα
+    if(results.length>5 && getNomosGeminiKey() && !nomosAiPending){
+      nomosAiPending = true;
+      const aiBtn = document.getElementById('nomos-ai-status');
+      if(aiBtn) aiBtn.textContent='🤖 AI αναζήτηση…';
+      const top30 = results.slice(0,30);
+      const aiIds = await nomosAiSearch(q, top30);
+      nomosAiPending = false;
+      if(aiBtn) aiBtn.textContent='';
+      if(aiIds && aiIds.length){
+        const aiMap = new Map(aiIds.map((id,i)=>[id,i]));
+        // AI top 3 πρώτα, μετά τα υπόλοιπα
+        results = [
+          ...aiIds.map(id=>results.find(e=>e.id===id)).filter(Boolean),
+          ...results.filter(e=>!aiMap.has(e.id))
+        ];
+      }
+    }
+  }
+
+  // Ταξινόμηση: score (feedback) πρώτα
+  results.sort((a,b)=>(b.score||0)-(a.score||0)||(b.indexed_at||0)-(a.indexed_at||0));
+
+  nomosSearchResults = results;
+  renderNomosResults(results, q);
+}
+
+// ── Feedback: "Αυτό ήταν!" ──
+async function nomosFeedback(id){
+  const entry = nomosIndex.find(e=>e.id===id);
+  if(!entry) return;
+  entry.score = (entry.score||0)+1;
+  await nomosSaveIndex();
+  toast('👍 Ευχαριστώ! Θα εμφανίζεται ψηλότερα στο μέλλον','success');
+  // Visual feedback
+  const row = document.querySelector(`[data-nomos-id="${id}"]`);
+  if(row) row.style.background='#f0fdf4';
+}
+
+// ── Open file ──
+function nomosOpenFile(path){
+  // Για OneDrive: δεν μπορούμε να ανοίξουμε local files από browser
+  // Εμφανίζουμε το path για copy-paste στον Explorer
+  const box = document.getElementById('nomos-path-box');
+  const txt = document.getElementById('nomos-path-txt');
+  if(box&&txt){
+    txt.value = path.replace(/\//g,'\\');
+    box.style.display='';
+    txt.select();
+    try{ document.execCommand('copy'); toast('📋 Διαδρομή αντιγράφηκε!','success'); }
+    catch(e){}
+  }
+}
+
+// ── Render results table ──
+function renderNomosResults(results, query){
+  const tbody = document.getElementById('nomos-tbody');
+  const countEl = document.getElementById('nomos-count');
+  if(!tbody) return;
+
+  if(!results.length){
+    tbody.innerHTML='<tr><td colspan="7" class="table-empty">Δεν βρέθηκαν αρχεία</td></tr>';
+    if(countEl) countEl.textContent='';
+    return;
+  }
+
+  const show = results.slice(0,200);
+  const q = (query||'').toLowerCase();
+
+  tbody.innerHTML = show.map((e,idx)=>{
+    const isAiTop = idx<3 && q && getNomosGeminiKey();
+    const rowStyle = isAiTop ? 'background:linear-gradient(90deg,#eff6ff,transparent)' : '';
+    const aiBadge = isAiTop ? '<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:8px;margin-left:4px">AI ✦</span>' : '';
+    const scoreBadge = e.score>0 ? `<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:1px 5px;border-radius:8px" title="Επιλέχθηκε ${e.score} φορές">★${e.score}</span>` : '';
+    const snippet = e.snippet ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px">${esc(e.snippet.slice(0,120))}</div>` : '';
+    return `<tr data-nomos-id="${e.id}" style="${rowStyle}">
+      <td style="font-size:11px"><span class="badge badge-gray">${esc(e.type)}</span></td>
+      <td><div>${esc(e.title)}${aiBadge}${scoreBadge}</div>${snippet}</td>
+      <td style="font-size:12px">${esc(e.year)}</td>
+      <td style="font-size:11px;color:var(--text3)">${esc(e.cat)}</td>
+      <td style="font-size:11px;color:var(--text3)">${esc(e.subcat)}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-secondary btn-sm" onclick="nomosOpenFile('${esc(e.path)}')" title="Αντιγραφή διαδρομής">📋</button>
+          <button class="btn btn-secondary btn-sm" onclick="nomosFeedback('${e.id}')" title="Αυτό ήταν που έψαχνα!">👍</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  if(countEl) countEl.textContent = results.length>200
+    ? `Εμφανίζονται 200 από ${results.length} αποτελέσματα`
+    : `${results.length} αρχεία`;
+}
+
+// alias για compatibility
+function renderNomos(){ nomosDoSearch(); }
+
+// ── Populate filters ──
+function populateNomosFilters(){
+  const cats  = [...new Set(nomosIndex.map(e=>e.cat).filter(Boolean))].sort();
+  const types = [...new Set(nomosIndex.map(e=>e.type).filter(Boolean))].sort();
+  const years = [...new Set(nomosIndex.map(e=>e.year).filter(Boolean))].sort().reverse();
+
+  const fCat = document.getElementById('nomos-f-folder');
+  if(fCat){
+    const prev = fCat.value;
+    fCat.innerHTML='<option value="">Όλες οι κατηγορίες</option>'+
+      cats.map(c=>`<option ${c===prev?'selected':''}>${esc(c)}</option>`).join('');
+  }
+  const fType = document.getElementById('nomos-f-type');
+  if(fType){
+    const prev = fType.value;
+    fType.innerHTML='<option value="">Όλοι οι τύποι</option>'+
+      types.map(t=>`<option ${t===prev?'selected':''}>${esc(t)}</option>`).join('');
+  }
+  const fYear = document.getElementById('nomos-f-year');
+  if(fYear){
+    const prev = fYear.value;
+    fYear.innerHTML='<option value="">Όλα τα έτη</option>'+
+      years.map(y=>`<option ${y===prev?'selected':''}>${esc(y)}</option>`).join('');
   }
 }
 
 function onNomosTopFolderChange(){
-  const fFolder=document.getElementById('nomos-f-folder')?document.getElementById('nomos-f-folder').value:'';
-  const subSel=document.getElementById('nomos-f-sub');
-  if(subSel){
-    const seen={};
-    const subs=[];
-    nomosIndex.forEach(function(n){
-      if(fFolder&&n.folder!==fFolder) return;
-      if(!n.subfolder) return;
-      const first=n.subfolder.indexOf('\\')>=0?n.subfolder.substring(0,n.subfolder.indexOf('\\')):n.subfolder;
-      if(first&&!seen[first]){seen[first]=1;subs.push(first);}
-    });
-    subs.sort();
-    subSel.innerHTML='<option value="">Όλοι οι υποφάκελοι</option>';
-    subs.forEach(function(s){const o=document.createElement('option');o.value=s;o.textContent=s;subSel.appendChild(o);});
+  const fCat = (document.getElementById('nomos-f-folder')||{value:''}).value;
+  const subcats = [...new Set(
+    nomosIndex.filter(e=>!fCat||e.cat===fCat).map(e=>e.subcat).filter(Boolean)
+  )].sort();
+  const fSub = document.getElementById('nomos-f-sub');
+  if(fSub){
+    fSub.innerHTML='<option value="">Όλοι οι υποφάκελοι</option>'+
+      subcats.map(s=>`<option>${esc(s)}</option>`).join('');
   }
+  nomosDoSearch();
+}
+
+// ── Init (καλείται από afterLogin) ──
+async function nomosInit(){
+  await nomosLoadIndex();
+  populateNomosFilters();
   renderNomos();
 }
 
-function getNomosFiltered(){
-  const q=document.getElementById('nomos-search')?document.getElementById('nomos-search').value.toLowerCase():'';
-  const fFolder=document.getElementById('nomos-f-folder')?document.getElementById('nomos-f-folder').value:'';
-  const fSub=document.getElementById('nomos-f-sub')?document.getElementById('nomos-f-sub').value:'';
-  const fType=document.getElementById('nomos-f-type')?document.getElementById('nomos-f-type').value:'';
-  const fYear=document.getElementById('nomos-f-year')?document.getElementById('nomos-f-year').value:'';
-  let arr=nomosIndex.slice();
-  if(q) arr=arr.filter(function(n){
-    return ((n.filename||n.title||'')+' '+(n.keywords||'')+' '+(n.subfolder||'')+' '+(n.proto||'')+' '+(n.folder||'')).toLowerCase().indexOf(q)>=0;
-  });
-  if(fFolder) arr=arr.filter(function(n){return n.folder===fFolder;});
-  if(fSub) arr=arr.filter(function(n){
-    var sub=n.subfolder||'';
-    return sub===fSub||sub.indexOf(fSub+'\\')===0;
-  });
-  if(fType) arr=arr.filter(function(n){return n.type===fType;});
-  if(fYear) arr=arr.filter(function(n){return n.year===fYear;});
-  var col=nomosSortState.col, dir=nomosSortState.dir;
-  arr.sort(function(a,b){return ((a[col]||'').localeCompare(b[col]||''))*dir;});
-  return arr;
-}
-
-function renderNomos(){
-  const arr=getNomosFiltered();
-  const tbody=document.getElementById('nomos-tbody');
-  if(!tbody)return;
-  if(!arr.length){
-    const msg=nomosIndex.length===0?'Δεν έχει φορτωθεί index — πατήστε Εισαγωγή Index':'Δεν βρέθηκαν αποτελέσματα';
-    tbody.innerHTML='<tr><td colspan="7" class="table-empty">'+msg+'</td></tr>';
-    document.getElementById('nomos-count').textContent='';
-    return;
-  }
-  const typeColors={
-    'Νόμος':'badge-blue','ΠΔ':'badge-teal','ΥΑ':'badge-orange',
-    'ΦΕΚ':'badge-purple','Εγκύκλιος':'badge-green','Απόφαση':'badge-orange',
-    'Ερώτημα/Απάντηση':'badge-blue','Οδηγία ΕΕ':'badge-teal',
-    'Πρότυπο':'badge-gray','Εγχειρίδιο':'badge-gray','Άλλο':'badge-gray'
-  };
-  const show=arr.slice(0,200);
-  const rows=show.map(function(n){
-    const tc=typeColors[n.type]||'badge-gray';
-    const extBadge=(n.ext&&n.ext!=='PDF')?'<span class="badge badge-gray" style="font-size:10px">'+esc(n.ext)+'</span> ':'';
-    const displayName=n.filename||n.title||'';
-    const shortName=displayName.length>80?displayName.substring(0,80)+'…':displayName;
-    const localPath=n.path||'';
-    const shortSub=(n.subfolder||'').length>35?(n.subfolder||'').substring(0,35)+'…':(n.subfolder||'');
-    const copyBtn=localPath?'<button class="btn-icon" onclick="copyNomosPath(this)" data-path="'+esc(localPath)+'" title="Αντιγραφή διαδρομής">📋</button>':'';
-    return '<tr>'
-      +'<td><span class="badge '+tc+'" style="white-space:nowrap;font-size:10px">'+esc(n.type)+'</span></td>'
-      +'<td style="max-width:360px;font-size:12px">'+extBadge+'<span title="'+esc(displayName)+'">'+esc(shortName)+'</span></td>'
-      +'<td class="mono" style="font-weight:600">'+esc(n.year)+'</td>'
-      +'<td class="mono muted" style="font-size:11px">'+esc(n.proto)+'</td>'
-      +'<td style="font-size:11px;color:var(--text3)">'+esc(n.folder)+'</td>'
-      +'<td style="font-size:11px;color:var(--text3)" title="'+esc(n.subfolder||'')+'">'+esc(shortSub)+'</td>'
-      +'<td class="actions">'+copyBtn+'</td>'
-      +'</tr>';
-  });
-  tbody.innerHTML=rows.join('');
-  const more=arr.length>200?' <span style="color:var(--text3)">— εμφανίζονται 200 από '+arr.length+', εξειδίκευσε την αναζήτηση</span>':'';
-  document.getElementById('nomos-count').innerHTML=arr.length+' αποτελέσματα από '+nomosIndex.length+' εγγραφές'+more;
-}
-
-function copyNomosPath(btn){
-  const path=btn.getAttribute('data-path');
-  if(!path)return;
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(path).then(function(){
-      toast('Διαδρομή αντιγράφηκε! Επικόλλησε στον Explorer (Ctrl+L)','success');
-    }).catch(function(){nomosPathFallback(path);});
+// ── Gemini key dialog ──
+function nomosShowKeyDialog(){
+  const current = getNomosGeminiKey();
+  const key = prompt(
+    'Gemini API Key (δωρεάν από aistudio.google.com)\n' +
+    'Αποθηκεύεται μόνο στον browser σου (localStorage).\n\n' +
+    (current ? 'Τρέχον key: …'+current.slice(-8) : 'Δεν υπάρχει key ακόμα.'),
+    current
+  );
+  if(key===null) return; // cancel
+  if(key.trim()){
+    setNomosGeminiKey(key.trim());
+    toast('✅ Gemini API key αποθηκεύτηκε','success');
   } else {
-    nomosPathFallback(path);
+    localStorage.removeItem(NOMOS_GEMINI_KEY_STORE);
+    toast('Gemini key αφαιρέθηκε','info');
   }
 }
 
-function nomosPathFallback(text){
-  const ta=document.createElement('textarea');
-  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
-  document.body.appendChild(ta);ta.select();
-  try{document.execCommand('copy');toast('Διαδρομή αντιγράφηκε! Επικόλλησε στον Explorer (Ctrl+L)','success');}
-  catch(e){toast('Αδυναμία αντιγραφής','error');}
-  document.body.removeChild(ta);
+// ── Update stats bar ──
+function nomosUpdateStats(){
+  const el = document.getElementById('nomos-total-count');
+  if(el) el.textContent = 'Index: '+nomosIndex.length+' αρχεία'+(getNomosGeminiKey()?' · AI 🤖 ενεργό':'');
 }
