@@ -45,7 +45,8 @@ function migrateInstTypes(){
   if(changed>0){ save('inst',installations); console.log('Migration: '+changed+' εγγραφές ενημερώθηκαν'); }
 }
 
-let installations=[],protocol=[],certificates=[],equipment=[],nomosIndex=[];
+let installations=[],protocol=[],certificates=[],equipment=[];
+let nomosIndex=[]; // διαχειρίζεται αποκλειστικά από nomos.js
 let leafletMap=null, mapMarkers=[], mapSelected=new Set();
 let editInstId=null,editProtoId=null,editCertId=null,editEquipId=null;
 let sortState={inst:{col:'fak',dir:1},proto:{col:'hm_xreosis',dir:-1},certs:{col:'expiry',dir:1},equip:{col:'fak',dir:1}};

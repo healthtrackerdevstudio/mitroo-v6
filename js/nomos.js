@@ -1,9 +1,9 @@
 // ══ ΝΟΜΟΘΕΣΙΑ v6 — Auto-indexing + AI Search ══
 
 // ── State ──
-let nomosIndex = [];           // [{id,filename,path,cat,subcat,snippet,score,indexed_at}]
+// nomosIndex δηλώνεται στο config.js ως global
 let nomosIndexing = false;
-let nomosIndexHandle = null;   // FileSystemDirectoryHandle
+let nomosIndexHandle = null;
 let nomosSearchResults = [];
 let nomosAiPending = false;
 const NOMOS_GEMINI_KEY_STORE = 'nomos_gemini_key';
@@ -112,76 +112,116 @@ function nomosHash(str){
 
 // ── ΚΥΡΙΑ ΣΥΝΑΡΤΗΣΗ INDEXING ──
 async function nomosStartIndexing(){
+  console.log('[nomos] nomosStartIndexing called');
   if(nomosIndexing){ toast('Το indexing τρέχει ήδη','info'); return; }
 
-  // Επιλογή φακέλου
-  try{
-    nomosIndexHandle = await window.showDirectoryPicker({mode:'read'});
-  }catch(e){
-    if(e.name!=='AbortError') toast('Σφάλμα επιλογής φακέλου','error');
+  // Browser detection
+  console.log('[nomos] showDirectoryPicker:', typeof window.showDirectoryPicker);
+  if(!window.showDirectoryPicker){
+    const isFirefox = navigator.userAgent.includes('Firefox');
+    const isSafari  = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    let msg = '⚠️ Ο browser σου δεν υποστηρίζει επιλογή φακέλου (File System Access API).\n\n';
+    if(isFirefox) msg += 'Firefox δεν υποστηρίζει αυτή τη λειτουργία.\n➜ Χρησιμοποίησε Chrome ή Edge.';
+    else if(isSafari) msg += 'Safari δεν υποστηρίζει αυτή τη λειτουργία.\n➜ Χρησιμοποίησε Chrome ή Edge.';
+    else msg += '➜ Χρησιμοποίησε Google Chrome ή Microsoft Edge (έκδοση 86+).';
+    alert(msg);
     return;
   }
 
+  // Επιλογή φακέλου
+  let dirHandle;
+  console.log('[nomos] opening directory picker…');
+  try{
+    dirHandle = await window.showDirectoryPicker({mode:'read'});
+    console.log('[nomos] folder selected:', dirHandle.name);
+  }catch(e){
+    console.error('[nomos] picker error:', e.name, e.message);
+    if(e.name==='AbortError') return; // χρήστης έκλεισε το dialog
+    if(e.name==='SecurityError'){
+      alert('Σφάλμα ασφαλείας: Βεβαιώσου ότι η σελίδα φορτώνεται μέσω HTTPS (Netlify).');
+    } else {
+      toast('Σφάλμα επιλογής φακέλου: '+e.message,'error');
+      console.error('showDirectoryPicker error:', e);
+    }
+    return;
+  }
+
+  nomosIndexHandle = dirHandle;
   nomosIndexing = true;
   nomosUpdateIndexUI('running');
 
-  const allFiles = [];
-  await nomosCollectFiles(nomosIndexHandle, '', allFiles);
+  // Εμφάνιση progress wrap
+  const wrap = document.getElementById('nomos-progress-wrap');
+  if(wrap) wrap.style.display='';
+  nomosSetProgress(0,1,'Σάρωση αρχείων — παρακαλώ περίμενε…');
+
+  // Συλλογή αρχείων
+  let allFiles = [];
+  try{
+    await nomosCollectFiles(nomosIndexHandle, '', allFiles);
+  }catch(e){
+    toast('Σφάλμα ανάγνωσης φακέλου: '+e.message,'error');
+    console.error('nomosCollectFiles error:', e);
+    nomosIndexing = false;
+    nomosUpdateIndexUI('done');
+    return;
+  }
+
+  if(!allFiles.length){
+    toast('Δεν βρέθηκαν PDF/DOCX αρχεία στον φάκελο','info');
+    nomosIndexing = false;
+    nomosUpdateIndexUI('done');
+    return;
+  }
 
   const total = allFiles.length;
-  let done = 0;
-  let newCount = 0;
+  let done = 0, newCount = 0;
   const existingIds = new Set(nomosIndex.map(e=>e.id));
 
-  nomosSetProgress(0, total, 'Σάρωση αρχείων…');
+  nomosSetProgress(0, total, `Βρέθηκαν ${total} αρχεία — ξεκινά indexing…`);
 
   for(let i=0; i<allFiles.length; i+=NOMOS_BATCH){
-    if(!nomosIndexing) break; // pause/stop
+    if(!nomosIndexing) break;
 
     const batch = allFiles.slice(i, i+NOMOS_BATCH);
     for(const {file, relPath} of batch){
+      if(!nomosIndexing) break;
       const id = nomosHash(relPath);
-
-      // Skip αν ήδη indexed (εκτός αν force refresh)
       if(existingIds.has(id)){ done++; continue; }
 
       const ext = file.name.split('.').pop().toLowerCase();
       let snippet = '';
+      try{
+        if(ext==='pdf') snippet = await nomosExtractPdfText(file);
+        else if(ext==='docx'||ext==='doc') snippet = await nomosExtractDocxText(file);
+      }catch(e){ console.warn('Extract error:', file.name, e); }
 
-      if(ext==='pdf') snippet = await nomosExtractPdfText(file);
-      else if(ext==='docx'||ext==='doc') snippet = await nomosExtractDocxText(file);
+      const {cat,subcat,subcat2} = nomosPathToCategory(relPath);
+      const {type,year,title}    = nomosMetaFromFilename(file.name);
 
-      const {cat, subcat, subcat2} = nomosPathToCategory(relPath);
-      const {type, year, title} = nomosMetaFromFilename(file.name);
-
-      nomosIndex.push({
-        id, filename: file.name, path: relPath,
-        cat, subcat, subcat2,
-        title, type, year,
-        snippet,
-        score: 0,           // feedback score
-        indexed_at: Date.now()
-      });
+      nomosIndex.push({id,filename:file.name,path:relPath,cat,subcat,subcat2,title,type,year,snippet,score:0,indexed_at:Date.now()});
       existingIds.add(id);
       newCount++;
       done++;
     }
 
-    nomosSetProgress(done, total, `${done} / ${total} αρχεία…`);
-
-    // Αποθήκευση κάθε batch
-    await nomosSaveIndex();
-    // Yield για να μην παγώσει ο browser
+    nomosSetProgress(done, total, `${done} / ${total} αρχεία (${newCount} νέα)…`);
+    try{ await nomosSaveIndex(); }catch(e){ console.warn('Save error:', e); }
     await new Promise(r=>setTimeout(r,10));
   }
 
   nomosIndexing = false;
   nomosUpdateIndexUI('done');
-  nomosSetProgress(total, total, `✅ Ολοκληρώθηκε! ${newCount} νέα αρχεία indexed (σύνολο: ${nomosIndex.length})`);
+
+  const msg = nomosIndexing===false && done===total
+    ? `✅ Ολοκληρώθηκε! ${newCount} νέα / ${nomosIndex.length} σύνολο`
+    : `⏸ Διακόπηκε — ${done}/${total} (${nomosIndex.length} σύνολο)`;
+  nomosSetProgress(total, total, msg);
+
   populateNomosFilters();
   renderNomos();
   updateBadges();
-  toast(`✅ Index: ${nomosIndex.length} αρχεία`,'success');
+  toast(nomosIndex.length ? `✅ Index: ${nomosIndex.length} αρχεία` : 'Index κενό','success');
 }
 
 // ── Recursive file collector ──

@@ -89,9 +89,9 @@ function loadData(){
       installations = results[0] || [];
       certificates  = results[1] || [];
       equipment     = results[2] || [];
-          // Πρωτόκολλο: πάντα localStorage
+      // Πρωτόκολλο: πάντα localStorage
       protocol = JSON.parse(localStorage.getItem(KEYS.proto)||'null')||[];
-      nomosIndex = JSON.parse(localStorage.getItem(KEYS.nomos)||'[]');
+      // nomosIndex: φορτώνεται από nomosInit() μετά το login
       _afterLoad();
       // Real-time listeners για κοινά
       fbListen('installations', function(d){
@@ -110,16 +110,7 @@ function loadData(){
   protocol=JSON.parse(localStorage.getItem(KEYS.proto)||'null')||[];
   certificates=JSON.parse(localStorage.getItem(KEYS.certs)||'[]');
   equipment=JSON.parse(localStorage.getItem(KEYS.equip)||'[]');
-  nomosIndex=JSON.parse(localStorage.getItem(KEYS.nomos)||'[]');
-  // Προσωπική λίστα νομοθεσίας
-  const _fbE=sessionStorage.getItem('fb_email')||'local';
-  const _nomosPersonalKey='nomos_personal_'+_fbE.replace(/[@.]/g,'_');
-  const _nomosPersonal=JSON.parse(localStorage.getItem(_nomosPersonalKey)||'[]');
-  if(_nomosPersonal.length>0){
-    // Συγχώνευση
-    const _seen=new Set(nomosIndex.map(function(x){return x._id||x.title;}));
-    _nomosPersonal.forEach(function(x){ if(!_seen.has(x._id||x.title)) nomosIndex.push(x); });
-  }
+  // nomosIndex: φορτώνεται από nomosInit() μετά το login
   _afterLoad();
 }
 
@@ -127,7 +118,6 @@ function _afterLoad(){
   aitions_list=[...new Set(protocol.map(p=>p.aition).filter(Boolean))].sort();
   aitimata_list=[...new Set([...(aitimata_list_defaults||[]),...protocol.map(p=>p.aitima).filter(Boolean),...protocol.map(p=>p.energeia).filter(Boolean)])].sort();
   engineers_dynamic=[...new Set([...engineers,...protocol.map(p=>p.mixanikos).filter(Boolean)])].sort();
-  if(nomosIndex.length) populateNomosFilters();
   migrateInstTypes();
   updateBadges(); renderDash(); renderInst(); renderProto(); renderCerts(); renderEquip(); populateYearFilter(); renderInstStats();
 }
