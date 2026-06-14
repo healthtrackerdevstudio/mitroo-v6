@@ -75,20 +75,38 @@ function nomosMetaFromFilename(filename){
 async function nomosExtractPdfText(file){
   try{
     const arrayBuffer = await file.arrayBuffer();
-    // Χρησιμοποιεί pdf.js αν διαθέσιμο
-    if(window.pdfjsLib){
-      const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-      let text = '';
-      const maxPages = Math.min(pdf.numPages, 3); // πρώτες 3 σελίδες
-      for(let i=1; i<=maxPages; i++){
+    if(!window.pdfjsLib) return '';
+
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    const totalPages = pdf.numPages;
+    let text = '';
+
+    if(totalPages <= 10){
+      // Μικρό αρχείο: διαβάζουμε ΟΛΟ
+      for(let i=1; i<=totalPages; i++){
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         text += content.items.map(s=>s.str).join(' ') + '\n';
       }
-      return text.trim().slice(0,2000); // max 2000 chars
+    } else {
+      // Μεγάλο αρχείο: αρχή (3) + μέση (2) + τέλος (2) = 7 σελίδες
+      const pagesToRead = [
+        1, 2, 3,                                              // αρχή
+        Math.floor(totalPages/2), Math.floor(totalPages/2)+1, // μέση
+        totalPages-1, totalPages                               // τέλος
+      ].filter((p,i,a)=>p>=1&&p<=totalPages&&a.indexOf(p)===i);
+
+      for(const pageNum of pagesToRead){
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        text += content.items.map(s=>s.str).join(' ') + '\n';
+      }
     }
-  }catch(e){}
-  return '';
+
+    // Καθαρισμός: αφαίρεση διπλών κενών, max 4000 chars
+    return text.replace(/\s+/g,' ').trim().slice(0, 4000);
+
+  }catch(e){ return ''; }
 }
 
 // ── DOCX text extraction (mammoth.js) ──
@@ -97,7 +115,7 @@ async function nomosExtractDocxText(file){
     if(window.mammoth){
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.extractRawText({arrayBuffer});
-      return (result.value||'').slice(0,2000);
+      return (result.value||'').replace(/\s+/g,' ').trim().slice(0,4000);
     }
   }catch(e){}
   return '';
