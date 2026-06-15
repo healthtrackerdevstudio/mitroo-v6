@@ -8,7 +8,7 @@ let nomosSearchResults = [];
 let nomosAiPending = false;
 const NOMOS_GEMINI_KEY_STORE = 'nomos_gemini_key';
 const NOMOS_INDEX_STORE = 'nomos_index_v6';
-const NOMOS_BATCH = 40;        // αρχεία ανά batch
+const NOMOS_BATCH = 10;        // 10 αρχεία ανά batch (λιγότερο freeze)
 
 // ── Gemini key (αποθηκεύεται local) ──
 function getNomosGeminiKey(){
@@ -20,14 +20,22 @@ function setNomosGeminiKey(k){
 
 // ── Load/Save index (Firestore ή localStorage) ──
 async function nomosLoadIndex(){
-  // Προσπάθεια από Firestore πρώτα
+  // Firestore chunks
   if(USE_FIREBASE && db){
     try{
-      const snap = await db.collection('nomosIndex').doc('v6').get();
-      if(snap.exists){ nomosIndex = snap.data().items||[]; return; }
-    }catch(e){}
+      let all = [];
+      for(let c=0; c<20; c++){
+        const snap = await db.collection('nomosIndex').doc('chunk_'+c).get();
+        if(!snap.exists) break;
+        all = all.concat(snap.data().items||[]);
+      }
+      if(all.length){ nomosIndex = all; return; }
+      // Fallback: παλιό single-doc format
+      const old = await db.collection('nomosIndex').doc('v6').get();
+      if(old.exists){ nomosIndex = old.data().items||[]; return; }
+    }catch(e){ console.warn('Firestore load error:', e); }
   }
-  // Fallback: localStorage
+  // localStorage fallback
   try{
     const raw = localStorage.getItem(NOMOS_INDEX_STORE);
     if(raw) nomosIndex = JSON.parse(raw);
@@ -35,13 +43,34 @@ async function nomosLoadIndex(){
 }
 
 async function nomosSaveIndex(){
-  // localStorage πάντα (γρήγορο)
-  try{ localStorage.setItem(NOMOS_INDEX_STORE, JSON.stringify(nomosIndex)); }catch(e){}
-  // Firestore αν διαθέσιμο
+  // Firestore σε chunks (max 800KB ανά doc)
   if(USE_FIREBASE && db){
-    try{ await db.collection('nomosIndex').doc('v6').set({items: nomosIndex, updated: Date.now()}); }
-    catch(e){ console.warn('Firestore save failed:', e); }
+    try{
+      const CHUNK = 500; // εγγραφές ανά Firestore document
+      const chunks = [];
+      for(let i=0; i<nomosIndex.length; i+=CHUNK)
+        chunks.push(nomosIndex.slice(i,i+CHUNK));
+
+      const batch = db.batch();
+      // Διαγραφή παλιών chunks
+      for(let c=0; c<20; c++)
+        batch.delete(db.collection('nomosIndex').doc('chunk_'+c));
+      // Γράψιμο νέων
+      chunks.forEach((ch,i)=>
+        batch.set(db.collection('nomosIndex').doc('chunk_'+i),
+          {items:ch, updated:Date.now(), total:nomosIndex.length})
+      );
+      await batch.commit();
+    }catch(e){ console.warn('Firestore save error:', e); }
   }
+  // localStorage fallback (μόνο αν χωράει)
+  try{
+    const json = JSON.stringify(nomosIndex);
+    if(json.length < 4*1024*1024) // max 4MB
+      localStorage.setItem(NOMOS_INDEX_STORE, json);
+    else
+      localStorage.removeItem(NOMOS_INDEX_STORE); // πολύ μεγάλο, skip
+  }catch(e){}
 }
 
 // ── Εξαγωγή κατηγορίας από path ──
@@ -74,38 +103,35 @@ function nomosMetaFromFilename(filename){
 // ── PDF text extraction (readable only) ──
 async function nomosExtractPdfText(file){
   try{
-    const arrayBuffer = await file.arrayBuffer();
     if(!window.pdfjsLib) return '';
+    // Χρήση URL object αντί arrayBuffer — λιγότερη μνήμη
+    const url = URL.createObjectURL(file);
+    let pdf;
+    try{ pdf = await pdfjsLib.getDocument(url).promise; }
+    finally{ URL.revokeObjectURL(url); }
 
-    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
     const totalPages = pdf.numPages;
     let text = '';
 
     if(totalPages <= 10){
-      // Μικρό αρχείο: διαβάζουμε ΟΛΟ
       for(let i=1; i<=totalPages; i++){
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         text += content.items.map(s=>s.str).join(' ') + '\n';
       }
     } else {
-      // Μεγάλο αρχείο: αρχή (3) + μέση (2) + τέλος (2) = 7 σελίδες
-      const pagesToRead = [
-        1, 2, 3,                                              // αρχή
-        Math.floor(totalPages/2), Math.floor(totalPages/2)+1, // μέση
-        totalPages-1, totalPages                               // τέλος
-      ].filter((p,i,a)=>p>=1&&p<=totalPages&&a.indexOf(p)===i);
-
+      const mid = Math.floor(totalPages/2);
+      const pagesToRead = [1,2,3, mid,mid+1, totalPages-1,totalPages]
+        .filter((p,i,a)=>p>=1&&p<=totalPages&&a.indexOf(p)===i);
       for(const pageNum of pagesToRead){
         const page = await pdf.getPage(pageNum);
         const content = await page.getTextContent();
         text += content.items.map(s=>s.str).join(' ') + '\n';
       }
     }
-
-    // Καθαρισμός: αφαίρεση διπλών κενών, max 4000 chars
-    return text.replace(/\s+/g,' ').trim().slice(0, 4000);
-
+    // Αν δεν βρέθηκε κείμενο → scanned PDF, skip
+    if(text.trim().length < 20) return '';
+    return text.trim().slice(0,4000);
   }catch(e){ return ''; }
 }
 
@@ -224,8 +250,10 @@ async function nomosStartIndexing(){
     }
 
     nomosSetProgress(done, total, `${done} / ${total} αρχεία (${newCount} νέα)…`);
+    // Αποθήκευση κάθε 10 αρχεία
     try{ await nomosSaveIndex(); }catch(e){ console.warn('Save error:', e); }
-    await new Promise(r=>setTimeout(r,10));
+    // Yield 50ms — δίνει χρόνο στον browser να μην παγώσει
+    await new Promise(r=>setTimeout(r,50));
   }
 
   nomosIndexing = false;
