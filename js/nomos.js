@@ -43,37 +43,53 @@ async function nomosLoadIndex(){
 }
 
 async function nomosSaveIndex(){
-  // Firestore σε chunks (max 800KB ανά doc)
   if(USE_FIREBASE && db){
     try{
-      const CHUNK = 500; // εγγραφές ανά Firestore document
+      const CHUNK = 200; // μικρότερα chunks — πιο ασφαλές
       const chunks = [];
       for(let i=0; i<nomosIndex.length; i+=CHUNK)
         chunks.push(nomosIndex.slice(i,i+CHUNK));
 
-      const batch = db.batch();
-      // Διαγραφή παλιών chunks
-      for(let c=0; c<20; c++)
-        batch.delete(db.collection('nomosIndex').doc('chunk_'+c));
-      // Γράψιμο νέων
-      chunks.forEach((ch,i)=>
-        batch.set(db.collection('nomosIndex').doc('chunk_'+i),
-          {items:ch, updated:Date.now(), total:nomosIndex.length})
-      );
-      await batch.commit();
+      // Γράψιμο chunks σε ξεχωριστά batches (όχι ένα μεγάλο)
+      for(let i=0; i<chunks.length; i++){
+        await db.collection('nomosIndex').doc('chunk_'+i).set({
+          items: chunks[i],
+          updated: Date.now(),
+          total: nomosIndex.length,
+          chunkCount: chunks.length
+        });
+      }
+      // Διαγραφή τυχόν παλιών chunks που περίσσεψαν
+      const delBatch = db.batch();
+      for(let i=chunks.length; i<chunks.length+10; i++)
+        delBatch.delete(db.collection('nomosIndex').doc('chunk_'+i));
+      await delBatch.commit();
     }catch(e){ console.warn('Firestore save error:', e); }
   }
-  // localStorage fallback (μόνο αν χωράει)
+  // localStorage fallback
   try{
     const json = JSON.stringify(nomosIndex);
-    if(json.length < 4*1024*1024) // max 4MB
+    if(json.length < 4*1024*1024)
       localStorage.setItem(NOMOS_INDEX_STORE, json);
     else
-      localStorage.removeItem(NOMOS_INDEX_STORE); // πολύ μεγάλο, skip
+      localStorage.removeItem(NOMOS_INDEX_STORE);
   }catch(e){}
 }
 
-// ── Εξαγωγή κατηγορίας από path ──
+// ── Wake Lock: αποτρέπει throttling όταν το tab γίνεται inactive ──
+let _wakeLock = null;
+async function nomosRequestWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  try{
+    _wakeLock = await navigator.wakeLock.request('screen');
+    console.log('[nomos] Wake Lock ενεργό — tab δεν θα κοιμηθεί');
+  }catch(e){ console.warn('[nomos] Wake Lock απέτυχε:', e.message); }
+}
+function nomosReleaseWakeLock(){
+  if(_wakeLock){ try{ _wakeLock.release(); }catch(e){} _wakeLock=null;
+    console.log('[nomos] Wake Lock αποδεσμεύτηκε');
+  }
+}
 function nomosPathToCategory(path){
   const parts = path.replace(/\\/g,'/').split('/').filter(Boolean);
   return {
@@ -193,6 +209,7 @@ async function nomosStartIndexing(){
   nomosIndexHandle = dirHandle;
   nomosIndexing = true;
   nomosUpdateIndexUI('running');
+  await nomosRequestWakeLock(); // αποτρέπει throttling
 
   // Εμφάνιση progress wrap
   const wrap = document.getElementById('nomos-progress-wrap');
@@ -257,6 +274,7 @@ async function nomosStartIndexing(){
   }
 
   nomosIndexing = false;
+  nomosReleaseWakeLock();
   nomosUpdateIndexUI('done');
 
   const msg = nomosIndexing===false && done===total
@@ -288,6 +306,7 @@ async function nomosCollectFiles(dirHandle, relPath, results){
 // ── Stop indexing ──
 function nomosStopIndexing(){
   nomosIndexing = false;
+  nomosReleaseWakeLock();
   nomosUpdateIndexUI('stopped');
   toast('Indexing διακόπηκε — αποθηκεύτηκε η πρόοδος','info');
 }
