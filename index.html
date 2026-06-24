@@ -1121,7 +1121,7 @@
         </div>
         <div class="form-group">
           <label>Είδος</label>
-          <select class="form-control" id="pf-sheet">
+          <select class="form-control" id="pf-sheet" onchange="if(this.value==='Αυτοκίνητα'){const a=document.getElementById('proto-fak-alerts');if(a)a.remove();}else{const fak=document.getElementById('pf-fak').value.trim();if(fak)checkFakAlerts(fak);}">
             <option value="">—</option>
             <option>Εγκαταστάσεις</option>
             <option>Αυτοκίνητα</option>
