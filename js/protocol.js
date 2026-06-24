@@ -417,6 +417,13 @@ function checkFakAlerts(fak){
   const today=new Date(); today.setHours(0,0,0,0);
   const alerts=[];
 
+  // Αν η κατηγορία είναι Αυτοκίνητα → δεν υπάρχουν πιστοποιητικά εγκατάστασης
+  const sheet=(document.getElementById('pf-sheet')||{value:''}).value;
+  if(sheet==='Αυτοκίνητα'){
+    renderFakAlerts([]);
+    return;
+  }
+
   // 1. Ληγμένα πιστοποιητικά
   const fakCerts=certificates.filter(function(c){return c.fak===fak;});
   const expired=fakCerts.filter(function(c){return c.expiry&&new Date(c.expiry)<today;});
