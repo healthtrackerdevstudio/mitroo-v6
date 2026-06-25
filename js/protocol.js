@@ -206,6 +206,41 @@ function populateYearFilter(){
 }
 
 
+function renderProtoLink(p){
+  if(!p.proto_exerx) return '';
+  const link = p.proto_exerx_link||'';
+  const isLocal = link && !link.startsWith('http');
+  const href = link ? (isLocal ? '#' : link) : '#';
+  const target = link && !isLocal ? '_blank' : '_self';
+  let html = `<span style="display:flex;align-items:center;gap:4px">`;
+  html += `<a href="${esc(href)}" target="${target}" style="color:var(--accent);text-decoration:none">${esc(p.proto_exerx)}</a>`;
+  if(link){
+    const safePath = link.replace(/\//g,'\\');
+    html += `<button class="btn-icon" style="font-size:11px;padding:1px 4px"
+      onclick="event.stopPropagation();protoCopyPath('${esc(safePath)}')"
+      title="Αντιγραφή διαδρομής (Ctrl+L στον Explorer)">📋</button>`;
+  }
+  html += `</span>`;
+  return html;
+}
+
+function protoCopyPath(path){
+  const clean = path.replace(/\//g,'\\');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(clean)
+      .then(()=>toast('📋 Διαδρομή αντιγράφηκε!','success'))
+      .catch(()=>_protoCopyFallback(clean));
+  } else { _protoCopyFallback(clean); }
+}
+function _protoCopyFallback(text){
+  const t=document.createElement('textarea');
+  t.value=text; t.style.position='fixed'; t.style.opacity='0';
+  document.body.appendChild(t); t.select();
+  try{ document.execCommand('copy'); toast('📋 Διαδρομή αντιγράφηκε!','success'); }
+  catch(e){ toast('Αδυναμία αντιγραφής','error'); }
+  document.body.removeChild(t);
+}
+
 function renderProto(){
   const arr=getProtoFiltered();
   const tbody=document.getElementById('proto-tbody');
@@ -231,7 +266,7 @@ function renderProto(){
       <td>${esc(p.aitima)}</td>
       <td>${esc(p.mixanikos)}</td>
       <td class="mono muted">${fmtDate(p.hm_exerx)}</td>
-      <td class="mono muted">${p.proto_exerx?`<a href="${p.proto_exerx_link||'#'}" target="${p.proto_exerx_link?'_blank':'_self'}" style="color:var(--accent);text-decoration:none">${esc(p.proto_exerx)}</a>`:''}</td>
+      <td class="mono muted">${renderProtoLink(p)}</td>
       <td style="font-size:12px;color:var(--text2)">${esc(p.energeia||'')}</td>
       <td>${teliko}</td>
       <td class="actions" onclick="event.stopPropagation()">

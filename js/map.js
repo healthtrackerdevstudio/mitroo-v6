@@ -113,15 +113,16 @@ function renderMap(){
     const selBadge=isSel?'<span style="color:#059669;font-weight:700"> ✓ Επιλεγμένο</span>':'';
 
     marker.bindPopup(
-      `<div style="font-size:13px;min-width:200px">`
+      `<div style="font-size:13px;min-width:210px">`
       +`<div style="font-weight:700;margin-bottom:4px">${esc(inst.fak)}</div>`
       +`<div style="color:#475569;margin-bottom:6px">${esc(inst.name)}</div>`
       +`<div style="font-size:11px;color:#64748b">${esc(inst.topothesia||'')} ${esc(inst.address||'')}</div>`
       +`<div style="font-size:11px;margin-top:4px">${esc(inst.type||'')}${inst.subtype?' — '+esc(inst.subtype):''}</div>`
       +`<div style="font-size:11px;margin-top:4px">📄 ${hasCerts} πιστ/κά${expBadge}</div>`
-      +`<div style="margin-top:8px;display:flex;gap:6px">`
-      +`<button onclick="mapToggleSelect('${esc(inst.fak)}')" style="font-size:11px;padding:3px 8px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;background:${isSel?'#dcfce7':'#f8fafc'}">${isSel?'✓ Επιλεγμένο':'+ Δρομολόγιο'}</button>`
-      +`<button onclick="openInstModal('${esc(inst.fak)}')" style="font-size:11px;padding:3px 8px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;background:#f8fafc">✏️ Επεξ.</button>`
+      +`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">`
+      +`<button onclick="leafletMap.closePopup();navToInst('${esc(inst.fak)}')" style="font-size:11px;padding:3px 8px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;background:#f8fafc">🏢 Εγκατάσταση</button>`
+      +`<button onclick="leafletMap.closePopup();navToProto('${esc(inst.fak)}')" style="font-size:11px;padding:3px 8px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;background:#f8fafc">📋 Πρωτόκολλο</button>`
+      +`<button onclick="mapToggleSelect('${esc(inst.fak)}')" style="font-size:11px;padding:3px 8px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;background:${isSel?'#dcfce7':'#f8fafc'}">${isSel?'✓ Επιλεγμένο':'🗺️ Δρομολόγιο'}</button>`
       +`</div>${selBadge}</div>`
     );
 
@@ -193,3 +194,21 @@ function mapRouteSelected(){
   }
 }
 
+
+// ── Διαλειτουργικότητα: από modal εγκατάστασης → χάρτης ──
+function navToMap(fak){
+  closeAllModals();
+  showView('map');
+  setTimeout(function(){
+    if(!leafletMap){ initMap(); }
+    // Βρες το marker του ΦΑΚ και άνοιξε το popup
+    const found = mapMarkers.find(function(m){ return m.fak===fak; });
+    if(found){
+      leafletMap.setView([found.lat, found.lng], 15);
+      found.marker.openPopup();
+    } else {
+      // Η εγκατάσταση δεν έχει συντεταγμένες
+      toast('⚠️ Η εγκατάσταση δεν έχει καταχωρημένες συντεταγμένες στον χάρτη','info');
+    }
+  }, 150);
+}

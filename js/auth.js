@@ -294,7 +294,9 @@ function afterLogin(username){
     }, 500);
   }
   loadData();
-  // Αρχικοποίηση index νομοθεσίας (φορτώνει από Firestore/localStorage)
+  // Auto-save πριν κλείσει ο browser
+  setupBeforeUnloadSave();
+  // Αρχικοποίηση index νομοθεσίας
   setTimeout(function(){ if(typeof nomosInit==='function') nomosInit(); }, 800);
 }
 
@@ -327,16 +329,14 @@ function autoBackupOnLogout(){
   try{
     const fbEmail=sessionStorage.getItem('fb_email')||'';
     const username=fbEmail?fbEmail.split('@')[0]:'user';
-    // Firebase mode: backup μόνο πρωτόκολλο (τα κοινά είναι στο Firebase)
-    // Local mode: backup όλα
     const data = USE_FIREBASE ? {
-      version:'v5.30',
+      version:'v6.1',
       exported: new Date().toISOString(),
       type:'protocol_only',
       user: fbEmail,
       protocol
     } : {
-      version:'v5.30',
+      version:'v6.1',
       exported: new Date().toISOString(),
       type:'full',
       installations,protocol,certificates,equipment
@@ -350,6 +350,41 @@ function autoBackupOnLogout(){
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }catch(e){console.error('Auto backup failed:',e);}
+}
+
+// ── Auto-save στο localStorage πριν κλείσει ο browser ──
+// (δεν μπορούμε να κατεβάσουμε αρχείο στο beforeunload)
+function setupBeforeUnloadSave(){
+  const EMERGENCY_KEY='mitroo_emergency_backup';
+  window.addEventListener('beforeunload', function(){
+    try{
+      const data={
+        version:'v6.1',
+        saved: new Date().toISOString(),
+        type:'emergency',
+        installations, protocol, certificates, equipment
+      };
+      localStorage.setItem(EMERGENCY_KEY, JSON.stringify(data));
+    }catch(e){}
+  });
+
+  // Έλεγχος αν υπάρχει emergency backup από προηγούμενο κλείσιμο
+  try{
+    const raw=localStorage.getItem(EMERGENCY_KEY);
+    if(raw){
+      const bk=JSON.parse(raw);
+      const savedAt=new Date(bk.saved);
+      const diffMin=Math.round((Date.now()-savedAt)/60000);
+      // Εμφάνισε toast μόνο αν το backup είναι πρόσφατο (<60 λεπτά)
+      if(diffMin<60){
+        setTimeout(function(){
+          toast('💾 Βρέθηκε αυτόματο backup από '+diffMin+' λεπτά πριν — τα δεδομένα σου είναι ασφαλή','success');
+        }, 2000);
+      }
+      // Καθαρισμός μετά την ανάκτηση
+      localStorage.removeItem(EMERGENCY_KEY);
+    }
+  }catch(e){}
 }
 window.onload=()=>{
   if(USE_FIREBASE){
