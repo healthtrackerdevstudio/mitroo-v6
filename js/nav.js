@@ -3,7 +3,14 @@ function showView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  document.getElementById('nav-'+v).classList.add('active');
+  const navBtn=document.getElementById('nav-'+v);
+  if(navBtn) navBtn.classList.add('active');
+  else {
+    // Sub-views χωρίς δικό τους nav button (πχ docgen-koin-mgr, docgen-para-mgr)
+    // κρατάνε ενεργό το nav-docgen
+    const dgBtn=document.getElementById('nav-docgen');
+    if(dgBtn && v.startsWith('docgen')) dgBtn.classList.add('active');
+  }
   // Re-render active view to ensure fresh data
   if(v==='proto')renderProto();
   else if(v==='inst')renderInst();
@@ -19,6 +26,7 @@ function showView(v){
   }
   else if(v==='docgen'){dgInit();dgRenderKoinMgr&&dgRenderKoinMgr();}
   else if(v==='docgen-koin-mgr'){dgRenderKoinMgr();dgPopulateMgrCat();}
+  else if(v==='docgen-para-mgr'){dgRenderParaMgrList();}
   else if(v==='map'){
     if(!leafletMap){ initMap(); }
     setTimeout(function(){

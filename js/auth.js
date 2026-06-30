@@ -296,6 +296,10 @@ function afterLogin(username){
   loadData();
   // Auto-save πριν κλείσει ο browser
   setupBeforeUnloadSave();
+  // Αίτημα άδειας για browser notifications (υπενθυμίσεις πρωτοκόλλου)
+  if('Notification' in window && Notification.permission==='default'){
+    setTimeout(function(){ Notification.requestPermission(); }, 3000);
+  }
   // Αρχικοποίηση index νομοθεσίας
   setTimeout(function(){ if(typeof nomosInit==='function') nomosInit(); }, 800);
 }

@@ -10,6 +10,7 @@ function renderDash(){
     return; // Μην συνεχίσεις τη renderDash
   }
   updateBadges();
+  if(typeof protoCheckReminders==='function') protoCheckReminders();
   const today=new Date(); today.setHours(0,0,0,0);
   const done=protocol.filter(p=>p.teliko).length;
   const phase2=protocol.filter(p=>!p.teliko&&p.hm_exerx).length;

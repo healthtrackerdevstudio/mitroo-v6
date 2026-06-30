@@ -128,12 +128,22 @@ let dgSelectedFak=null;
 let dgSelectedProtos=new Set();
 let dgSelectedTemplateId=null;
 
+// ── Βιβλιοθήκη παραγράφων (Σκεπτικό / Αποφασιστικό) ──
+const DG_PARA_KEY='docgen_paragraphs';
+let dgParaData=[];          // [{id,section:'sk'|'apof',num,title,text}]
+let dgParaSelectedSk=[];    // επιλεγμένα ids σκεπτικού, με σειρά
+let dgParaSelectedApof=[];  // επιλεγμένα ids αποφασιστικού, με σειρά
+
 function dgInit(){
   const stored=localStorage.getItem(DG_KOIN_KEY);
   dgKoinData=stored?JSON.parse(stored):JSON.parse(JSON.stringify(DG_KOIN_DEFAULT));
   dgRenderKoinCats();
   dgRenderKoinList();
   dgPopulateMgrCat();
+
+  const storedPara=localStorage.getItem(DG_PARA_KEY);
+  dgParaData=storedPara?JSON.parse(storedPara):[];
+  dgRenderParaLists();
 }
 
 // ── Autocomplete ΦΑΚ ──
@@ -152,6 +162,8 @@ function dgSetFak(fak){
   document.getElementById('dg-fak').value=fak;
   document.getElementById('ac-dg-fak').style.display='none';
   dgSelectedProtos.clear();
+  dgParaSelectedSk=[];
+  dgParaSelectedApof=[];
   // Preview εγκατάστασης
   const inst=installations.find(i=>i.fak===fak);
   const prev=document.getElementById('dg-inst-preview');
@@ -161,6 +173,7 @@ function dgSetFak(fak){
   }
   dgRenderProtoList();
   dgSuggestKoin();
+  dgRenderParaLists();
 }
 
 // ── Πρωτόκολλα ──
@@ -368,6 +381,193 @@ function dgRemoveKoin(id){
 
 function dgSaveKoin(){localStorage.setItem(DG_KOIN_KEY,JSON.stringify(dgKoinData));}
 
+// ══ ΒΙΒΛΙΟΘΗΚΗ ΠΑΡΑΓΡΑΦΩΝ (Σκεπτικό / Αποφασιστικό) ══
+
+function dgSaveParaData(){
+  localStorage.setItem(DG_PARA_KEY,JSON.stringify(dgParaData));
+}
+
+function dgParaList(section){
+  return dgParaData.filter(p=>p.section===section)
+    .sort((a,b)=>(a.num||'').localeCompare(b.num||'',undefined,{numeric:true}));
+}
+
+// ── Render διαθέσιμων παραγράφων με checkboxes (στο DocGen view) ──
+function dgRenderParaLists(){
+  ['sk','apof'].forEach(section=>{
+    const cont=document.getElementById('dg-para-list-'+section);
+    if(!cont) return;
+    const items=dgParaList(section);
+    const selectedArr = section==='sk'?dgParaSelectedSk:dgParaSelectedApof;
+    if(!items.length){
+      cont.innerHTML='<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">Καμία παράγραφος. Πρόσθεσε από «⚙️ Διαχείριση Παραγράφων».</div>';
+      return;
+    }
+    cont.innerHTML=items.map(p=>{
+      const checked=selectedArr.includes(p.id);
+      return `<div style="display:flex;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);align-items:flex-start;cursor:pointer" onclick="dgToggleParaSelect('${section}','${p.id}')">
+        <input type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation();dgToggleParaSelect('${section}','${p.id}')">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600">§${esc(p.num||'')} — ${esc(p.title||'')}</div>
+          <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc((p.text||'').slice(0,160))}</div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+  dgRenderParaSelectedPreview();
+}
+
+function dgToggleParaSelect(section,id){
+  const arr = section==='sk'?dgParaSelectedSk:dgParaSelectedApof;
+  const idx=arr.indexOf(id);
+  if(idx>=0) arr.splice(idx,1);
+  else arr.push(id);
+  dgRenderParaLists();
+}
+
+// ── Preview επιλεγμένων (δεξιά στήλη) με δυνατότητα αναδιάταξης ──
+function dgRenderParaSelectedPreview(){
+  ['sk','apof'].forEach(section=>{
+    const cont=document.getElementById('dg-para-selected-'+section);
+    if(!cont) return;
+    const arr = section==='sk'?dgParaSelectedSk:dgParaSelectedApof;
+    if(!arr.length){
+      cont.innerHTML='<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">Καμία επιλογή</div>';
+      return;
+    }
+    cont.innerHTML=arr.map((id,idx)=>{
+      const p=dgParaData.find(x=>x.id===id);
+      if(!p) return '';
+      return `<div style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-weight:600;color:var(--primary)">${idx+1}.</span>
+          <span style="flex:1;font-weight:600">§${esc(p.num||'')} ${esc(p.title||'')}</span>
+          <button class="btn-icon" style="font-size:11px" onclick="dgMoveParaSelected('${section}',${idx},-1)" title="Πάνω" ${idx===0?'disabled style="opacity:.3"':''}>↑</button>
+          <button class="btn-icon" style="font-size:11px" onclick="dgMoveParaSelected('${section}',${idx},1)" title="Κάτω" ${idx===arr.length-1?'disabled style="opacity:.3"':''}>↓</button>
+          <button class="btn-icon" style="font-size:11px;color:#dc2626" onclick="dgToggleParaSelect('${section}','${p.id}')" title="Αφαίρεση">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function dgMoveParaSelected(section,idx,dir){
+  const arr = section==='sk'?dgParaSelectedSk:dgParaSelectedApof;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=arr.length) return;
+  [arr[idx],arr[newIdx]]=[arr[newIdx],arr[idx]];
+  dgRenderParaSelectedPreview();
+}
+
+function dgClearParaSelection(section){
+  if(section==='sk') dgParaSelectedSk=[];
+  else dgParaSelectedApof=[];
+  dgRenderParaLists();
+}
+
+// ── Συναρμολόγηση τελικού κειμένου (σειρά επιλογής) ──
+function dgBuildParaText(section){
+  const arr = section==='sk'?dgParaSelectedSk:dgParaSelectedApof;
+  return arr.map(id=>{
+    const p=dgParaData.find(x=>x.id===id);
+    return p ? (p.num?p.num+'. ':'')+(p.text||'') : '';
+  }).filter(Boolean).join('\n\n');
+}
+
+// ══ ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΓΡΑΦΩΝ (ξεχωριστή σελίδα, ίδιο pattern με Κοινοποιήσεις) ══
+
+let dgParaMgrActiveSection='sk';
+
+function dgParaMgrSetSection(section){
+  dgParaMgrActiveSection=section;
+  document.querySelectorAll('.dg-para-sec-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.section===section);
+  });
+  dgRenderParaMgrList();
+}
+
+function dgRenderParaMgrList(){
+  const cont=document.getElementById('dg-para-mgr-list');
+  if(!cont) return;
+  const q=(document.getElementById('dg-para-mgr-search')||{value:''}).value.toLowerCase();
+  let items=dgParaList(dgParaMgrActiveSection);
+  if(q) items=items.filter(p=>(p.num+' '+p.title+' '+p.text).toLowerCase().includes(q));
+  if(!items.length){
+    cont.innerHTML='<div style="padding:20px;color:var(--text3);text-align:center">Καμία παράγραφος σε αυτή την κατηγορία</div>';
+    return;
+  }
+  cont.innerHTML=items.map(p=>`
+    <div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;background:var(--surface)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px">§${esc(p.num||'')} — ${esc(p.title||'')}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;white-space:pre-wrap">${esc(p.text||'')}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn-icon" onclick="dgEditPara('${p.id}')" title="Επεξεργασία">✏️</button>
+          <button class="btn-icon" onclick="dgDeletePara('${p.id}')" title="Διαγραφή">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function dgNewPara(){
+  document.getElementById('dg-para-edit-id').value='';
+  document.getElementById('dg-para-edit-section').value=dgParaMgrActiveSection;
+  document.getElementById('dg-para-edit-num').value='';
+  document.getElementById('dg-para-edit-title').value='';
+  document.getElementById('dg-para-edit-text').value='';
+  document.getElementById('dg-para-edit-title-h').textContent='Νέα Παράγραφος';
+  openModal('modal-para-edit');
+}
+
+function dgEditPara(id){
+  const p=dgParaData.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('dg-para-edit-id').value=p.id;
+  document.getElementById('dg-para-edit-section').value=p.section;
+  document.getElementById('dg-para-edit-num').value=p.num||'';
+  document.getElementById('dg-para-edit-title').value=p.title||'';
+  document.getElementById('dg-para-edit-text').value=p.text||'';
+  document.getElementById('dg-para-edit-title-h').textContent='Επεξεργασία Παραγράφου';
+  openModal('modal-para-edit');
+}
+
+function dgSavePara(){
+  const id=document.getElementById('dg-para-edit-id').value;
+  const section=document.getElementById('dg-para-edit-section').value;
+  const num=document.getElementById('dg-para-edit-num').value.trim();
+  const title=document.getElementById('dg-para-edit-title').value.trim();
+  const text=document.getElementById('dg-para-edit-text').value.trim();
+  if(!title||!text){ toast('Συμπλήρωσε τίτλο και κείμενο','error'); return; }
+
+  if(id){
+    const p=dgParaData.find(x=>x.id===id);
+    if(p){ p.section=section; p.num=num; p.title=title; p.text=text; }
+  } else {
+    dgParaData.push({id:'para_'+Date.now(),section,num,title,text});
+  }
+  dgSaveParaData();
+  closeModal('modal-para-edit');
+  dgRenderParaMgrList();
+  dgRenderParaLists();
+  toast('✅ Παράγραφος αποθηκεύτηκε','success');
+}
+
+function dgDeletePara(id){
+  if(!confirm('Διαγραφή αυτής της παραγράφου;')) return;
+  dgParaData=dgParaData.filter(p=>p.id!==id);
+  // Αφαίρεση και από τυχόν επιλογές
+  dgParaSelectedSk=dgParaSelectedSk.filter(x=>x!==id);
+  dgParaSelectedApof=dgParaSelectedApof.filter(x=>x!==id);
+  dgSaveParaData();
+  dgRenderParaMgrList();
+  dgRenderParaLists();
+  toast('🗑 Παράγραφος διαγράφηκε','info');
+}
+
+
+
 // ── Κοινοποιήσεις Manager ──
 function dgPopulateMgrCat(){
   const sel=document.getElementById('koin-mgr-cat');
@@ -510,6 +710,8 @@ function dgBuildData(protoObj){
     eq_tanks_text:tanksText,
     eq_fortistes:eq.fortistes?(eq.fortistes+(eq.fortistes_theseis?' με '+eq.fortistes_theseis+' θέσεις':'')):'' ,
     eq_extras:extras.join(', '),
+    dg_skeptiko:dgBuildParaText('sk'),
+    dg_apofasi:dgBuildParaText('apof'),
     koinopoiiseis:dgKoinSelected.map(function(k){return {koin_name:k.name||'',koin_addr:k.addr||'',koin_email:k.email||''};
     }),
     tanks_list:(eq.tanks||[]).map(function(t){return {mitroo:t.mitroo||'',fuel:t.fuel||'',liters:t.liters?String(t.liters):'',ogkom:t.ogkom||''};

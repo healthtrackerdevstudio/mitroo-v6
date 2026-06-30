@@ -262,7 +262,7 @@ function renderProto(){
       <td class="mono"><strong>${esc(p.fak)}</strong> <button class="btn-icon" style="font-size:11px;padding:1px 4px;color:var(--primary);opacity:.7" onclick="event.stopPropagation();navToInst('${esc(p.fak)}')" title="Άνοιγμα εγκατάστασης">🏢</button></td>
       <td class="mono muted">${esc(p.proto_eisx)}</td>
       <td class="mono">${fmtDate(p.hm_xreosis)}</td>
-      <td>${esc(p.aition)}</td>
+      <td>${esc(p.aition)}${protoReminderBadge(p)}</td>
       <td>${esc(p.aitima)}</td>
       <td>${esc(p.mixanikos)}</td>
       <td class="mono muted">${fmtDate(p.hm_exerx)}</td>
@@ -433,6 +433,8 @@ function openProtoModal(id=null,prefillFak=null){
   if(rejCb){rejCb.checked=!!(p&&p.rejected);}
   if(rejDate){rejDate.value=v('rejected_date');}
   if(rejWrap){rejWrap.style.display=(p&&p.rejected)?'block':'none';}
+  // Υπενθύμιση
+  if(p) protoFillReminderForm(p); else protoClearReminderForm();
   openModal('modal-proto');
   // Καθαρισμός παλιών alerts
   const existingAlert=document.getElementById('proto-fak-alerts');
@@ -630,6 +632,13 @@ function saveProto(){
   if(!fak){toast('Το ΦΑΚ είναι υποχρεωτικό','error');return;}
   const g=id=>document.getElementById(id)?document.getElementById(id).value.trim():'';
   const rejected=document.getElementById('pf-rejected')?document.getElementById('pf-rejected').checked:false;
+
+  // Υπενθύμιση
+  const reminderMode=g('pf-reminder-mode');
+  const reminderDays=g('pf-reminder-days');
+  const reminderDatetime=g('pf-reminder-datetime');
+  const reminderDate=protoComputeReminderDate(reminderMode,g('pf-hm_xreosis'),reminderDays,reminderDatetime);
+
   const obj={
     fak,sheet:g('pf-sheet'),aition:g('pf-aition'),aitima:g('pf-aitima'),
     proto_eisx:g('pf-proto_eisx'),hm_xreosis:g('pf-hm_xreosis'),
@@ -638,7 +647,12 @@ function saveProto(){
     proto_exerx_link:g('pf-proto_exerx_link'),teliko:g('pf-teliko'),
     notes:g('pf-notes'),
     rejected:rejected,
-    rejected_date:rejected?g('pf-rejected-date'):''
+    rejected_date:rejected?g('pf-rejected-date'):'',
+    reminder_mode:reminderMode,
+    reminder_days:reminderDays,
+    reminder_date:reminderDate,
+    reminder_note:g('pf-reminder-note'),
+    reminder_done: editProtoId ? protoPreserveReminderDone(editProtoId, reminderDate) : false
   };
 
   // ══ ΕΛΕΓΧΟΣ ΔΙΠΛΟΕΓΓΡΑΦΗΣ ══
@@ -761,3 +775,156 @@ function navToInstFiltered(filter){
   }, 80);
 }
 
+
+// ══ ΥΠΕΝΘΥΜΙΣΕΙΣ ΠΡΩΤΟΚΟΛΛΟΥ ══
+
+function protoReminderModeChange(){
+  const mode=document.getElementById('pf-reminder-mode').value;
+  const daysInp=document.getElementById('pf-reminder-days');
+  const dtInp=document.getElementById('pf-reminder-datetime');
+  const noteInp=document.getElementById('pf-reminder-note');
+  daysInp.style.display = mode==='days' ? '' : 'none';
+  dtInp.style.display   = mode==='date' ? '' : 'none';
+  noteInp.style.display = mode ? '' : 'none';
+}
+
+// Υπολογισμός τελικής ημερομηνίας/ώρας υπενθύμισης βάσει mode
+function protoComputeReminderDate(mode, hmXreosis, days, datetimeLocal){
+  if(mode==='days' && hmXreosis && days){
+    const base=new Date(hmXreosis+'T09:00:00'); // default 09:00 το πρωί
+    base.setDate(base.getDate()+parseInt(days,10));
+    return base.toISOString();
+  }
+  if(mode==='date' && datetimeLocal){
+    return new Date(datetimeLocal).toISOString();
+  }
+  return '';
+}
+
+// Διατήρηση reminder_done=true αν η ημ/νία υπενθύμισης δεν άλλαξε κατά την επεξεργασία
+function protoPreserveReminderDone(editId, newReminderDate){
+  const existing=protocol.find(p=>p._id===editId);
+  if(existing && existing.reminder_date===newReminderDate) return !!existing.reminder_done;
+  return false;
+}
+
+// Γέμισμα φόρμας reminder όταν ανοίγει modal για επεξεργασία
+function protoFillReminderForm(p){
+  const modeEl=document.getElementById('pf-reminder-mode');
+  const daysEl=document.getElementById('pf-reminder-days');
+  const dtEl=document.getElementById('pf-reminder-datetime');
+  const noteEl=document.getElementById('pf-reminder-note');
+  if(!modeEl) return;
+  modeEl.value = p.reminder_mode||'';
+  daysEl.value = p.reminder_days||'';
+  noteEl.value = p.reminder_note||'';
+  if(p.reminder_date){
+    // ISO → datetime-local format (YYYY-MM-DDTHH:mm)
+    const d=new Date(p.reminder_date);
+    const pad=n=>String(n).padStart(2,'0');
+    dtEl.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+  } else {
+    dtEl.value='';
+  }
+  protoReminderModeChange();
+}
+
+// Καθαρισμός φόρμας reminder (νέα εγγραφή)
+function protoClearReminderForm(){
+  const modeEl=document.getElementById('pf-reminder-mode');
+  if(!modeEl) return;
+  modeEl.value='';
+  document.getElementById('pf-reminder-days').value='';
+  document.getElementById('pf-reminder-datetime').value='';
+  document.getElementById('pf-reminder-note').value='';
+  protoReminderModeChange();
+}
+
+// ── Έλεγχος ληγμένων/επερχόμενων υπενθυμίσεων ──
+function protoCheckReminders(){
+  const now=new Date();
+  const in48h=new Date(now.getTime()+48*60*60*1000);
+
+  const active=protocol.filter(p=>
+    p.reminder_date && !p.reminder_done && !p.teliko && !p.rejected
+  );
+
+  const overdue=active.filter(p=>new Date(p.reminder_date)<=now);
+  const upcoming=active.filter(p=>{
+    const d=new Date(p.reminder_date);
+    return d>now && d<=in48h;
+  });
+
+  protoRenderDashReminders(overdue, upcoming);
+
+  // Browser notification για ληγμένα (μία φορά ανά session)
+  if(overdue.length && 'Notification' in window){
+    const shownKey='mitroo_reminders_shown_'+now.toISOString().slice(0,10);
+    const alreadyShown=sessionStorage.getItem(shownKey);
+    if(!alreadyShown){
+      sessionStorage.setItem(shownKey,'1');
+      if(Notification.permission==='granted'){
+        new Notification('🔔 Μητρώο Εγκαταστάσεων',{
+          body: overdue.length+' υπενθύμιση'+(overdue.length>1?'εις':'')+' πρωτοκόλλου χρειάζονται προσοχή',
+          icon:''
+        });
+      } else if(Notification.permission!=='denied'){
+        Notification.requestPermission();
+      }
+    }
+  }
+}
+
+function protoRenderDashReminders(overdue, upcoming){
+  const section=document.getElementById('dash-reminders-section');
+  const list=document.getElementById('dash-reminders-list');
+  const countEl=document.getElementById('dash-reminders-count');
+  if(!section||!list) return;
+
+  const total=overdue.length+upcoming.length;
+  if(!total){ section.style.display='none'; return; }
+
+  section.style.display='';
+  countEl.textContent=total;
+
+  const renderItem=(p,isOverdue)=>{
+    const d=new Date(p.reminder_date);
+    const dateStr=d.toLocaleDateString('el-GR')+' '+d.toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit'});
+    const color=isOverdue?'#dc2626':'#d97706';
+    const bg=isOverdue?'#fef2f2':'#fffbeb';
+    const icon=isOverdue?'🔴':'🟡';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${bg};border-left:3px solid ${color};border-radius:6px;margin-bottom:6px;cursor:pointer"
+      onclick="openProtoModal('${p._id||''}')">
+      <span>${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600">${esc(p.fak)} — ${esc(p.aition||'')}</div>
+        <div style="font-size:11px;color:${color}">${isOverdue?'Έληξε':'Λήγει'}: ${dateStr}${p.reminder_note?' · '+esc(p.reminder_note):''}</div>
+      </div>
+      <button class="btn-icon" onclick="event.stopPropagation();protoMarkReminderDone('${p._id||''}')" title="Ολοκληρώθηκε">✓</button>
+    </div>`;
+  };
+
+  list.innerHTML =
+    overdue.map(p=>renderItem(p,true)).join('') +
+    upcoming.map(p=>renderItem(p,false)).join('');
+}
+
+function protoMarkReminderDone(id){
+  const p=protocol.find(x=>x._id===id);
+  if(!p) return;
+  p.reminder_done=true;
+  save('proto',protocol);
+  toast('✓ Υπενθύμιση ολοκληρώθηκε','success');
+  protoCheckReminders();
+}
+
+// ── Mini badge 🔔 για γραμμές πρωτοκόλλου με ενεργή υπενθύμιση ──
+function protoReminderBadge(p){
+  if(!p.reminder_date || p.reminder_done) return '';
+  const now=new Date();
+  const d=new Date(p.reminder_date);
+  const overdue=d<=now;
+  const color=overdue?'#dc2626':'#d97706';
+  const title=(overdue?'Έληξε: ':'Λήγει: ')+d.toLocaleDateString('el-GR')+' '+d.toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit'});
+  return ` <span title="${esc(title)}" style="color:${color};font-size:11px">🔔</span>`;
+}
