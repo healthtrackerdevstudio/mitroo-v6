@@ -281,3 +281,10 @@
 #recent-list .recent-item:hover{background:#f8fafc}
 /* ═══════════ END HOME FIXES ═══════════ */
 
+
+/* Doc Generator: section toggle buttons (Σκεπτικό/Αποφασιστικό) */
+.dg-para-sec-btn.active{
+  background:var(--surface) !important;
+  color:var(--primary);
+  box-shadow:0 1px 3px rgba(0,0,0,.1);
+}
