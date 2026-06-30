@@ -7,7 +7,7 @@
   Τεχνικό Τμήμα Μεταφορών - Περιφερειακή Ενότητα Ανατολικής Αττικής
   Περιφέρεια Αττικής - Υπουργείο Ψηφιακής Διακυβέρνησης
 
-  Έκδοση: v6.2 (split από v5.30)
+  Έκδοση: v6.4 (split από v5.30)
   Ημερομηνία: Ιούνιος 2026
   Επικοινωνία: ilias.papadakis@office365.attica.gov.gr
 =======================================================================
@@ -16,7 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Μητρώο Εγκαταστάσεων v6.2</title>
+<title>Μητρώο Εγκαταστάσεων v6.4</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@
     </div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <button class="btn btn-primary btn-full login-btn" onclick="doLogin()">Είσοδος</button>
-    <p class="login-footer">© 2026 Η.Π. — v6.2</p>
+    <p class="login-footer">© 2026 Η.Π. — v6.4</p>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
 <div id="app" style="display:none;flex-direction:column;width:100%;height:100vh;overflow:hidden">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.2</span></div>
+    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.4</span></div>
     <div class="topbar-spacer"></div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="topbar-btn" id="btn-backup-all" onclick="backupData()" title="Backup όλων των δεδομένων">💾 Backup</button>
@@ -150,6 +150,15 @@
         <div class="stat-card"><div class="stat-icon red">⚠️</div><div><div class="stat-value" id="s-certs-expired">0</div><div class="stat-label">Ληγμένα Πιστ/κά</div></div></div>
         <div class="stat-card"><div class="stat-icon purple">🔧</div><div><div class="stat-value" id="s-equip">0</div><div class="stat-label">Εγγραφές Εξοπλισμού</div></div></div>
         <div class="stat-card"><div class="stat-icon blue">⏱️</div><div><div class="stat-value" id="s-avg-days">—</div><div class="stat-label">Μέσος Χρόνος Διεκπ. (ημ.)</div></div></div>
+      </div>
+
+      <!-- Ενεργές Υπενθυμίσεις -->
+      <div id="dash-reminders-section" class="recent-section" style="display:none">
+        <div class="recent-header" style="display:flex;align-items:center;gap:8px">
+          🔔 Υπενθυμίσεις
+          <span class="badge badge-orange" id="dash-reminders-count">0</span>
+        </div>
+        <div id="dash-reminders-list"></div>
       </div>
 
       <!-- Τελευταίες κινήσεις -->
@@ -559,6 +568,7 @@
         <button class="btn btn-success" onclick="dgGenerate()" style="font-size:13px;font-weight:700;padding:8px 22px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 6px rgba(22,163,74,.35)">📄 Παραγωγή Εγγράφου</button>
         <div class="toolbar-spacer"></div>
         <button class="btn btn-secondary btn-sm" onclick="showView('docgen-koin-mgr')">⚙️ Διαχείριση Κοινοποιήσεων</button>
+        <button class="btn btn-secondary btn-sm" onclick="showView('docgen-para-mgr')">📝 Διαχείριση Παραγράφων</button>
       </div>
       <div style="display:grid;grid-template-columns:420px 1fr;gap:0;height:calc(100vh - 110px);overflow:hidden">
         <!-- LEFT PANEL -->
@@ -603,6 +613,34 @@
             <div class="form-section-title">4. Όνομα Αρχείου</div>
             <input class="form-control" id="dg-filename" value="{{fak}}_{{proto_eisx}}_{{today}}.docx" style="font-size:12px">
             <div style="font-size:10px;color:var(--text3);margin-top:3px">Χρησιμοποίησε placeholders</div>
+          </div>
+
+          <!-- Βήμα 5: Παράγραφοι Σκεπτικού -->
+          <div class="form-section" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+            <div class="form-section-title">5. Σκεπτικό
+              <button class="btn btn-secondary btn-sm" onclick="dgClearParaSelection('sk')" style="margin-left:auto">Καθαρισμός</button>
+            </div>
+            <div id="dg-para-list-sk" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#fafafa;margin-bottom:6px">
+              <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">Φόρτωση…</div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px">Σειρά εμφάνισης:</div>
+            <div id="dg-para-selected-sk" style="max-height:120px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)">
+              <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">Καμία επιλογή</div>
+            </div>
+          </div>
+
+          <!-- Βήμα 6: Παράγραφοι Αποφασιστικού -->
+          <div class="form-section" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+            <div class="form-section-title">6. Αποφασιστικό
+              <button class="btn btn-secondary btn-sm" onclick="dgClearParaSelection('apof')" style="margin-left:auto">Καθαρισμός</button>
+            </div>
+            <div id="dg-para-list-apof" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:#fafafa;margin-bottom:6px">
+              <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">Φόρτωση…</div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px">Σειρά εμφάνισης:</div>
+            <div id="dg-para-selected-apof" style="max-height:120px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)">
+              <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">Καμία επιλογή</div>
+            </div>
           </div>
 
         </div>
@@ -658,6 +696,64 @@
             <span>ΚΑΤΗΓΟΡΙΑ</span><span>ΟΝΟΜΑ</span><span>ΔΙΕΥΘΥΝΣΗ</span><span>EMAIL</span><span>ΧΩΡΙΚΗ ΑΡΜΟΔ.</span><span></span>
           </div>
           <div id="dg-koin-mgr-rows" style="max-height:calc(100vh - 230px);overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ΔΙΑΧΕΙΡΙΣΗ ΠΑΡΑΓΡΑΦΩΝ -->
+    <div class="view" id="view-docgen-para-mgr">
+      <div class="toolbar">
+        <span class="toolbar-title">📝 Διαχείριση Παραγράφων (Σκεπτικό / Αποφασιστικό)</span>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="dgNewPara()">+ Νέα Παράγραφος</button>
+        <button class="btn btn-secondary btn-sm" onclick="showView('docgen')">← Πίσω</button>
+      </div>
+      <div style="padding:16px">
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+          <div style="display:flex;gap:4px;background:#f1f5f9;padding:3px;border-radius:8px">
+            <button class="dg-para-sec-btn active" data-section="sk" onclick="dgParaMgrSetSection('sk')"
+              style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;background:transparent">📖 Σκεπτικό</button>
+            <button class="dg-para-sec-btn" data-section="apof" onclick="dgParaMgrSetSection('apof')"
+              style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;background:transparent">⚖️ Αποφασιστικό</button>
+          </div>
+          <input class="form-control" id="dg-para-mgr-search" placeholder="Αναζήτηση…" oninput="dgRenderParaMgrList()" style="max-width:250px">
+        </div>
+        <div id="dg-para-mgr-list" style="max-width:900px"></div>
+      </div>
+    </div>
+
+    <!-- MODAL: Επεξεργασία Παραγράφου -->
+    <div class="modal-overlay" id="modal-para-edit">
+      <div class="modal" style="max-width:600px">
+        <div class="modal-header">
+          <span class="modal-title" id="dg-para-edit-title-h">Νέα Παράγραφος</span>
+          <button class="modal-close" onclick="closeModal('modal-para-edit')">✕</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="dg-para-edit-id">
+          <div class="form-group">
+            <label>Ενότητα</label>
+            <select class="form-control" id="dg-para-edit-section">
+              <option value="sk">Σκεπτικό</option>
+              <option value="apof">Αποφασιστικό</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Αριθμός Παραγράφου</label>
+            <input class="form-control" id="dg-para-edit-num" placeholder="πχ. 1, 2α, 3...">
+          </div>
+          <div class="form-group">
+            <label>Τίτλος</label>
+            <input class="form-control" id="dg-para-edit-title" placeholder="Σύντομος περιγραφικός τίτλος">
+          </div>
+          <div class="form-group">
+            <label>Κείμενο Παραγράφου</label>
+            <textarea class="form-control" id="dg-para-edit-text" rows="8" placeholder="Πλήρες κείμενο της παραγράφου…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('modal-para-edit')">Άκυρο</button>
+          <button class="btn btn-primary" onclick="dgSavePara()">Αποθήκευση</button>
         </div>
       </div>
     </div>
@@ -1154,6 +1250,19 @@
         <div class="form-group">
           <label>Ημ. Εξερχόμενου</label>
           <input class="form-control" type="date" id="pf-hm_exerx">
+        </div>
+        <div class="form-group ff" style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:10px">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;color:#92400e">🔔 Υπενθύμιση (προαιρετικό)</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
+            <select class="form-control" id="pf-reminder-mode" style="max-width:170px" onchange="protoReminderModeChange()">
+              <option value="">Χωρίς υπενθύμιση</option>
+              <option value="days">Χ ημέρες μετά τη χρέωση</option>
+              <option value="date">Συγκεκριμένη ημ/νία &amp; ώρα</option>
+            </select>
+            <input class="form-control" type="number" id="pf-reminder-days" placeholder="πχ. 15" min="1" style="max-width:90px;display:none">
+            <input class="form-control" type="datetime-local" id="pf-reminder-datetime" style="max-width:220px;display:none">
+          </div>
+          <input class="form-control" id="pf-reminder-note" placeholder="Σημείωση υπενθύμισης (προαιρετικό)" style="margin-top:6px;display:none" >
         </div>
         <div class="form-group ff ac-wrap">
           <label>Τελική Εξ. Ενέργεια</label>
