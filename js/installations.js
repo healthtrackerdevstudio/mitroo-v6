@@ -27,11 +27,12 @@ function renderInst(){
     const inactive=i.sfrагisi||i.anaklisi;
     const rowCls3=inactive?'row-phase4 clickable':'clickable';
     const lockBadge=inactive?'<span title="'+(i.sfrагisi?'Σε Σφράγιση':'')+(i.sfrагisi&&i.anaklisi?' / ':'')+(i.anaklisi?'Σε Ανάκληση ΑΛ':'')+'"> 🔒</span>':'';
+    const takBadge=i.taktopoi?`<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:6px" title="Τακτοποίηση${i.taktopoi_num?' αρ.'+i.taktopoi_num:''}${i.taktopoi_nomos?' — '+i.taktopoi_nomos:''}"> 🗂️</span>`:'';
     const today2=new Date(); today2.setHours(0,0,0,0);
     const adeiaBadge=i.adeia_lixis&&new Date(i.adeia_lixis)<today2?'<span title="Ληγμένη Άδεια: '+fmtDate(i.adeia_lixis)+'" style="color:#f97316"> ⚠️</span>':'';
     return `<tr class="${rowCls3}" onclick="openInstModal('${esc(i.fak)}')" title="Κλικ για επεξεργασία">
     <td class="mono">${esc(i.fak)}${lockBadge}${adeiaBadge}</td>
-    <td><strong>${esc(i.name)}</strong></td>
+    <td><strong>${esc(i.name)}</strong>${takBadge}</td>
     <td>${esc(i.topothesia)}</td>
     <td class="mono muted">${esc(i.afm)}</td>
     <td>${typeTag(i.type,i.subtype)}</td>
@@ -105,6 +106,15 @@ function openInstModal(fak=null){
   f('if-tel').value=i?i.tel:'';
   f('if-email').value=i?i.email:'';
   f('if-ypeuthinos').value=i?i.ypeuthinos||'':'';
+  // Τακτοποίηση
+  const takCb=document.getElementById('if-taktopoi');
+  const takWrap=document.getElementById('if-taktopoi-wrap');
+  if(takCb){
+    takCb.checked=!!(i&&i.taktopoi);
+    if(takWrap) takWrap.style.display=(i&&i.taktopoi)?'':'none';
+  }
+  f('if-taktopoi-num').value=i?i.taktopoi_num||'':'';
+  f('if-taktopoi-nomos').value=i?i.taktopoi_nomos||'':'';
   f('if-vytio').value=i?i.vytio||'':'';
   f('if-adeia-typos').value=i?i.adeia_typos||'':'';
   f('if-adeia-lixis').value=i?i.adeia_lixis||'':'';
@@ -291,6 +301,9 @@ function saveInst(){
     tel:document.getElementById('if-tel').value.trim(),
     email:document.getElementById('if-email').value.trim(),
     ypeuthinos:document.getElementById('if-ypeuthinos').value.trim(),
+    taktopoi:!!(document.getElementById('if-taktopoi')&&document.getElementById('if-taktopoi').checked),
+    taktopoi_num:document.getElementById('if-taktopoi-num')?document.getElementById('if-taktopoi-num').value.trim():'',
+    taktopoi_nomos:document.getElementById('if-taktopoi-nomos')?document.getElementById('if-taktopoi-nomos').value.trim():'',
     vytio:document.getElementById('if-vytio').value.trim(),
     adeia_typos:document.getElementById('if-adeia-typos').value,
     adeia_lixis:document.getElementById('if-adeia-lixis').value,
@@ -347,3 +360,9 @@ function deleteInst(fak){
   toast('🗑 Εγκατάσταση «'+fak+'» διαγράφηκε'+(extra.length?' (+ '+extra.join(', ')+')':''),'info');
 }
 
+
+// ── Τακτοποίηση toggle ──
+function toggleTaktopoi(cb){
+  const wrap=document.getElementById('if-taktopoi-wrap');
+  if(wrap) wrap.style.display=cb.checked?'':'none';
+}

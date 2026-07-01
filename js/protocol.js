@@ -253,7 +253,7 @@ function renderProto(){
     if(isRejected){ phaseIndicator=''; }
     // Φάση 1 — χωρίς χρώμα (μόνο χρέωση)
     const teliko=isRejected?
-                 `<span class="badge badge-red">❌ Απορρίφθηκε${p.rejected_date?' '+fmtDate(p.rejected_date):''}</span>`:
+                 `<span class="badge badge-red" title="${esc(p.rejected_reason||'')}">❌ Απορρίφθηκε${p.rejected_date?' '+fmtDate(p.rejected_date):''}${p.rejected_reason?' — '+esc(p.rejected_reason.slice(0,30))+(p.rejected_reason.length>30?'…':''):''}</span>`:
                  p.teliko?`<span class="badge badge-green">✅ ${fmtDate(p.teliko)}</span>`:
                  p.hm_exerx?`<span class="badge badge-blue">🔵 Προς Υπογραφές</span>`:
                  p.hm_xreosis?`<span class="badge badge-gray">⬜ Προς Ενέργεια</span>`:
@@ -432,6 +432,8 @@ function openProtoModal(id=null,prefillFak=null){
   const rejWrap=f('pf-rejected-date-wrap');
   if(rejCb){rejCb.checked=!!(p&&p.rejected);}
   if(rejDate){rejDate.value=v('rejected_date');}
+  const rejReason=f('pf-rejected-reason');
+  if(rejReason){rejReason.value=v('rejected_reason');}
   if(rejWrap){rejWrap.style.display=(p&&p.rejected)?'block':'none';}
   // Υπενθύμιση
   if(p) protoFillReminderForm(p); else protoClearReminderForm();
@@ -648,7 +650,7 @@ function saveProto(){
     notes:g('pf-notes'),
     rejected:rejected,
     rejected_date:rejected?g('pf-rejected-date'):'',
-    reminder_mode:reminderMode,
+    rejected_reason:rejected?g('pf-rejected-reason'):'',
     reminder_days:reminderDays,
     reminder_date:reminderDate,
     reminder_note:g('pf-reminder-note'),
