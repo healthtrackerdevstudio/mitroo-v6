@@ -7,7 +7,7 @@
   Τεχνικό Τμήμα Μεταφορών - Περιφερειακή Ενότητα Ανατολικής Αττικής
   Περιφέρεια Αττικής - Υπουργείο Ψηφιακής Διακυβέρνησης
 
-  Έκδοση: v6.4 (split από v5.30)
+  Έκδοση: v6.5 (split από v5.30)
   Ημερομηνία: Ιούνιος 2026
   Επικοινωνία: ilias.papadakis@office365.attica.gov.gr
 =======================================================================
@@ -16,7 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Μητρώο Εγκαταστάσεων v6.4</title>
+<title>Μητρώο Εγκαταστάσεων v6.5</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@
     </div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <button class="btn btn-primary btn-full login-btn" onclick="doLogin()">Είσοδος</button>
-    <p class="login-footer">© 2026 Η.Π. — v6.4</p>
+    <p class="login-footer">© 2026 Η.Π. — v6.5</p>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
 <div id="app" style="display:none;flex-direction:column;width:100%;height:100vh;overflow:hidden">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.4</span></div>
+    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.5</span></div>
     <div class="topbar-spacer"></div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="topbar-btn" id="btn-backup-all" onclick="backupData()" title="Backup όλων των δεδομένων">💾 Backup</button>
@@ -963,9 +963,29 @@
           <label>Email Ιδιοκτήτη</label>
           <input class="form-control" id="if-email" type="email" placeholder="email@example.gr">
         </div>
-        <div class="form-group ff">
+        <div class="form-group">
           <label>Υπεύθυνος Λειτουργίας</label>
           <input class="form-control" id="if-ypeuthinos" placeholder="Ονοματεπώνυμο υπευθύνου">
+        </div>
+
+        <!-- Τακτοποίηση -->
+        <div class="form-group ff" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:10px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#15803d;margin-bottom:0">
+            <input type="checkbox" id="if-taktopoi" onchange="toggleTaktopoi(this)" style="width:16px;height:16px;cursor:pointer">
+            🗂️ Τακτοποίηση
+          </label>
+          <div id="if-taktopoi-wrap" style="display:none;margin-top:8px;display:none">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div>
+                <label style="font-size:12px;color:var(--text3)">Αριθμός Τακτοποίησης</label>
+                <input class="form-control" id="if-taktopoi-num" placeholder="πχ. 12345/2026" style="margin-top:4px;max-width:200px">
+              </div>
+              <div style="flex:1;min-width:180px">
+                <label style="font-size:12px;color:var(--text3)">Νόμος</label>
+                <input class="form-control" id="if-taktopoi-nomos" placeholder="πχ. Ν.4495/2017" style="margin-top:4px">
+              </div>
+            </div>
+          </div>
         </div>
         <!-- Βυτιοφόρο: μόνο για Πρατήριο Υγρών / Μικτό -->
         <div class="form-group" id="vytio-row" style="display:none">
@@ -1296,8 +1316,16 @@
             ❌ Απορρίφθηκε
           </label>
           <div id="pf-rejected-date-wrap" style="display:none;margin-top:8px">
-            <label style="font-size:12px;color:var(--text3)">Ημερομηνία Απόρριψης</label>
-            <input class="form-control" type="date" id="pf-rejected-date" style="max-width:180px;margin-top:4px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div>
+                <label style="font-size:12px;color:var(--text3)">Ημερομηνία Απόρριψης</label>
+                <input class="form-control" type="date" id="pf-rejected-date" style="max-width:180px;margin-top:4px">
+              </div>
+              <div style="flex:1;min-width:180px">
+                <label style="font-size:12px;color:var(--text3)">Αιτιολογία Απόρριψης</label>
+                <input class="form-control" id="pf-rejected-reason" placeholder="Σύντομη αιτιολογία…" style="margin-top:4px">
+              </div>
+            </div>
           </div>
         </div>
       </div>
