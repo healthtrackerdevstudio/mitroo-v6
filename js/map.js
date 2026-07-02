@@ -25,7 +25,7 @@ function makeMapIcon(inst,selected){
   const key=getInstIconKey(inst);
   const ico=MAP_ICONS[key]||MAP_ICONS['default'];
   const size=selected?40:32;
-  const inactive=inst.sfrагisi||inst.anaklisi;
+  const inactive=inst.sfragisi||inst.anaklisi;
   const opacity=inactive?'0.5':'1';
   const border=selected?'3px solid '+ico.color:'2px solid '+ico.color;
   const bg=ico.color+'22';

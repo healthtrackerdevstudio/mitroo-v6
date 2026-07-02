@@ -24,9 +24,9 @@ function renderInst(){
   if(!tbody)return;
   if(!arr.length){tbody.innerHTML=`<tr><td colspan="8" class="table-empty">Δεν βρέθηκαν εγκαταστάσεις</td></tr>`;document.getElementById('inst-count').textContent='';return;}
   tbody.innerHTML=arr.map(i=>{
-    const inactive=i.sfrагisi||i.anaklisi;
+    const inactive=i.sfragisi||i.anaklisi;
     const rowCls3=inactive?'row-phase4 clickable':'clickable';
-    const lockBadge=inactive?'<span title="'+(i.sfrагisi?'Σε Σφράγιση':'')+(i.sfrагisi&&i.anaklisi?' / ':'')+(i.anaklisi?'Σε Ανάκληση ΑΛ':'')+'"> 🔒</span>':'';
+    const lockBadge=inactive?'<span title="'+(i.sfragisi?'Σε Σφράγιση':'')+(i.sfragisi&&i.anaklisi?' / ':'')+(i.anaklisi?'Σε Ανάκληση ΑΛ':'')+'"> 🔒</span>':'';
     const takBadge=i.taktopoi?`<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:6px" title="Τακτοποίηση${i.taktopoi_num?' αρ.'+i.taktopoi_num:''}${i.taktopoi_nomos?' — '+i.taktopoi_nomos:''}"> 🗂️</span>`:'';
     const today2=new Date(); today2.setHours(0,0,0,0);
     const adeiaBadge=i.adeia_lixis&&new Date(i.adeia_lixis)<today2?'<span title="Ληγμένη Άδεια: '+fmtDate(i.adeia_lixis)+'" style="color:#f97316"> ⚠️</span>':'';
@@ -127,13 +127,13 @@ function openInstModal(fak=null){
   f('if-coords').value=i?i.coords:'';
   f('if-notes').value=i?i.notes:'';
   // Σφράγιση / Ανάκληση
-  const sfr=document.getElementById('if-sfrагisi');
+  const sfr=document.getElementById('if-sfragisi');
   const ana=document.getElementById('if-anaklisi');
-  if(sfr){sfr.checked=!!(i&&i.sfrагisi);}
+  if(sfr){sfr.checked=!!(i&&i.sfragisi);}
   if(ana){ana.checked=!!(i&&i.anaklisi);}
-  const sfrAp=document.getElementById('if-sfrагisi-ap');
+  const sfrAp=document.getElementById('if-sfragisi-ap');
   const anaAp=document.getElementById('if-anaklisi-ap');
-  if(sfrAp){sfrAp.value=i?i.sfrагisi_ap||'':('')}
+  if(sfrAp){sfrAp.value=i?i.sfragisi_ap||'':('')}
   if(anaAp){anaAp.value=i?i.anaklisi_ap||'':('')}
   // Αμεταβίβαστα
   const ametaCb=document.getElementById('if-ameta');
@@ -176,10 +176,10 @@ function openInstModal(fak=null){
   qnavShow('inst',fak);
 }
 function toggleInstStatus(){
-  const sfr=document.getElementById('if-sfrагisi');
+  const sfr=document.getElementById('if-sfragisi');
   const ana=document.getElementById('if-anaklisi');
   const ameta=document.getElementById('if-ameta');
-  const sfrWrap=document.getElementById('if-sfrагisi-wrap');
+  const sfrWrap=document.getElementById('if-sfragisi-wrap');
   const anaWrap=document.getElementById('if-anaklisi-wrap');
   const ametaWrap=document.getElementById('if-ameta-wrap');
   if(sfrWrap) sfrWrap.style.display=sfr&&sfr.checked?'block':'none';
@@ -316,8 +316,8 @@ function saveInst(){
     maps_link:document.getElementById('if-maps_link').value.trim(),
     coords:document.getElementById('if-coords').value.trim(),
     notes:document.getElementById('if-notes').value.trim(),
-    sfrагisi:document.getElementById('if-sfrагisi')?document.getElementById('if-sfrагisi').checked:false,
-    sfrагisi_ap:document.getElementById('if-sfrагisi-ap')?document.getElementById('if-sfrагisi-ap').value.trim():'',
+    sfragisi:document.getElementById('if-sfragisi')?document.getElementById('if-sfragisi').checked:false,
+    sfragisi_ap:document.getElementById('if-sfragisi-ap')?document.getElementById('if-sfragisi-ap').value.trim():'',
     anaklisi:document.getElementById('if-anaklisi')?document.getElementById('if-anaklisi').checked:false,
     anaklisi_ap:document.getElementById('if-anaklisi-ap')?document.getElementById('if-anaklisi-ap').value.trim():'',
     ameta:document.getElementById('if-ameta')?document.getElementById('if-ameta').checked:false,

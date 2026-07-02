@@ -21,10 +21,10 @@ function renderInstStats(){
   if(selStatus.length){
     arr=arr.filter(function(i){
       return selStatus.some(function(s){
-        if(s==='active') return !i.sfrагisi&&!i.anaklisi;
-        if(s==='sfrагisi') return i.sfrагisi;
+        if(s==='active') return !i.sfragisi&&!i.anaklisi;
+        if(s==='sfragisi') return i.sfragisi;
         if(s==='anaklisi') return i.anaklisi;
-        if(s==='inactive') return i.sfrагisi||i.anaklisi;
+        if(s==='inactive') return i.sfragisi||i.anaklisi;
         return false;
       });
     });
@@ -57,8 +57,8 @@ function renderInstStats(){
   var _elActive=document.getElementById('is-r-active');
   var _elInactive=document.getElementById('is-r-inactive');
   if(_elTotal) _elTotal.textContent=arr.length;
-  if(_elActive) _elActive.textContent=arr.filter(function(i){return !i.sfrагisi&&!i.anaklisi;}).length;
-  if(_elInactive) _elInactive.textContent=arr.filter(function(i){return i.sfrагisi||i.anaklisi;}).length;
+  if(_elActive) _elActive.textContent=arr.filter(function(i){return !i.sfragisi&&!i.anaklisi;}).length;
+  if(_elInactive) _elInactive.textContent=arr.filter(function(i){return i.sfragisi||i.anaklisi;}).length;
   document.getElementById('is-r-autopsia').textContent=arr.filter(function(i){return i.autopsia;}).length;
 
   // Πίνακας
@@ -70,10 +70,10 @@ function renderInstStats(){
     return;
   }
   tbody.innerHTML=arr.map(function(i){
-    const inactive=i.sfrагisi||i.anaklisi;
+    const inactive=i.sfragisi||i.anaklisi;
     const rowClass2=inactive?'row-phase4 clickable':'clickable';
     const status=inactive?
-      '<span style="color:#dc2626;font-weight:600">🔒 '+(i.sfrагisi?'Σφράγιση':'')+(i.sfrагisi&&i.anaklisi?'/':'')+(i.anaklisi?'Ανάκληση':'')+'</span>':
+      '<span style="color:#dc2626;font-weight:600">🔒 '+(i.sfragisi?'Σφράγιση':'')+(i.sfragisi&&i.anaklisi?'/':'')+(i.anaklisi?'Ανάκληση':'')+'</span>':
       '<span style="color:#16a34a">✅ Ενεργή</span>';
     const autoDate=i.autopsia?fmtDate(i.autopsia):'<span class="muted">—</span>';
     const autoStyle=i.autopsia&&new Date(i.autopsia)<twoYearsAgo?'color:#f97316;font-weight:600':'';
@@ -166,11 +166,11 @@ function printInstReport(fak){
     return '✅ '+fmtDate(expiry);
   }
 
-  const inactive=inst.sfrагisi||inst.anaklisi;
+  const inactive=inst.sfragisi||inst.anaklisi;
   const statusHtml=inactive?
     '<div style="background:#fee2e2;border:2px solid #ef4444;border-radius:6px;padding:10px;margin:12px 0;color:#991b1b;font-weight:600;font-size:14px">🔒 '
-    +(inst.sfrагisi?'ΣΕ ΣΦΡΑΓΙΣΗ'+(inst.sfrагisi_ap?' — Αρ.Απόφ.: '+inst.sfrагisi_ap:''):'')
-    +(inst.sfrагisi&&inst.anaklisi?' / ':'')
+    +(inst.sfragisi?'ΣΕ ΣΦΡΑΓΙΣΗ'+(inst.sfragisi_ap?' — Αρ.Απόφ.: '+inst.sfragisi_ap:''):'')
+    +(inst.sfragisi&&inst.anaklisi?' / ':'')
     +(inst.anaklisi?'ΣΕ ΑΝΑΚΛΗΣΗ ΑΛ'+(inst.anaklisi_ap?' — Αρ.Απόφ.: '+inst.anaklisi_ap:''):'')
     +'</div>':'';
 
