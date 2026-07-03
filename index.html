@@ -7,7 +7,7 @@
   Τεχνικό Τμήμα Μεταφορών - Περιφερειακή Ενότητα Ανατολικής Αττικής
   Περιφέρεια Αττικής - Υπουργείο Ψηφιακής Διακυβέρνησης
 
-  Έκδοση: v6.5 (split από v5.30)
+  Έκδοση: v6.6 (split από v5.30)
   Ημερομηνία: Ιούνιος 2026
   Επικοινωνία: ilias.papadakis@office365.attica.gov.gr
 =======================================================================
@@ -16,7 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Μητρώο Εγκαταστάσεων v6.5</title>
+<title>Μητρώο Εγκαταστάσεων v6.6</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@
     </div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <button class="btn btn-primary btn-full login-btn" onclick="doLogin()">Είσοδος</button>
-    <p class="login-footer">© 2026 Η.Π. — v6.5</p>
+    <p class="login-footer">© 2026 Η.Π. — v6.6</p>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
 <div id="app" style="display:none;flex-direction:column;width:100%;height:100vh;overflow:hidden">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.5</span></div>
+    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v6.6</span></div>
     <div class="topbar-spacer"></div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="topbar-btn" id="btn-backup-all" onclick="backupData()" title="Backup όλων των δεδομένων">💾 Backup</button>
@@ -175,78 +175,105 @@
       <div class="toolbar">
         <span class="toolbar-title">📊 Αναλυτικά Στατιστικά</span>
         <div class="toolbar-spacer"></div>
+        <button class="btn btn-secondary btn-sm" id="stats-toggle-bars" onclick="statsToggleBars()" title="Εμφάνιση/Απόκρυψη γραφημάτων">📊 Γραφήματα</button>
         <button class="btn btn-secondary btn-sm" onclick="resetDashFilters()">✕ Καθαρισμός</button>
       </div>
-      <div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
-          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Έτη</div>
-              <div class="dd-wrap" id="dd-years-wrap">
-                <button type="button" class="filter-select dd-btn" onclick="toggleDropdown('dd-years')" style="min-width:120px;text-align:left;display:flex;justify-content:space-between;align-items:center">
-                  <span id="dd-years-label">Όλα τα έτη</span><span>▾</span>
-                </button>
-                <div class="dd-panel" id="dd-years" style="display:none"></div>
-              </div>
+      <!-- Φίλτρα -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Έτη</div>
+            <div class="dd-wrap" id="dd-years-wrap">
+              <button type="button" class="filter-select dd-btn" onclick="toggleDropdown('dd-years')" style="min-width:120px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+                <span id="dd-years-label">Όλα τα έτη</span><span>▾</span>
+              </button>
+              <div class="dd-panel" id="dd-years" style="display:none"></div>
             </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Είδος</div>
-              <select class="filter-select" id="dash-f-sheet" onchange="renderStats()">
-                <option value="">Όλα</option>
-                <option>Εγκαταστάσεις</option>
-                <option>Αυτοκίνητα</option>
-              </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Είδος</div>
+            <select class="filter-select" id="dash-f-sheet" onchange="renderStats()">
+              <option value="">Όλα</option>
+              <option>Εγκαταστάσεις</option>
+              <option>Αυτοκίνητα</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Τελ. Εξ. Ενέργεια</div>
+            <div class="dd-wrap" id="dd-energ-wrap">
+              <button type="button" class="filter-select dd-btn" onclick="toggleDropdown('dd-energ')" style="min-width:170px;text-align:left;display:flex;justify-content:space-between;align-items:center">
+                <span id="dd-energ-label">Όλες</span><span>▾</span>
+              </button>
+              <div class="dd-panel" id="dd-energ" style="display:none"></div>
             </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Τελ. Εξ. Ενέργεια</div>
-              <div class="dd-wrap" id="dd-energ-wrap">
-                <button type="button" class="filter-select dd-btn" onclick="toggleDropdown('dd-energ')" style="min-width:170px;text-align:left;display:flex;justify-content:space-between;align-items:center">
-                  <span id="dd-energ-label">Όλες</span><span>▾</span>
-                </button>
-                <div class="dd-panel" id="dd-energ" style="display:none"></div>
-              </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Μηχανικός / Αιτών</div>
+            <div id="dash-mhx-checks" style="max-height:100px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:4px 8px;min-width:160px;max-width:220px"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">ΦΑΚ</div>
+            <input class="filter-select" id="dash-f-fak" placeholder="π.χ. GPL 35" oninput="renderStats()" style="min-width:120px">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2-στήλη layout -->
+      <div id="stats-main-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-height:0">
+
+        <!-- ΑΡΙΣΤΕΡΑ: Γραφήματα + Αριθμοί -->
+        <div id="stats-bars-col" style="display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100vh - 220px)">
+          <!-- Summary cards -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px">
+              <div style="font-size:11px;color:var(--text3)">Κινήσεις (φίλτρο)</div>
+              <div style="font-size:22px;font-weight:700;color:var(--accent)" id="dash-r-total">—</div>
             </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Μηχανικός / Αιτών</div>
-              <div id="dash-mhx-checks" style="max-height:100px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:4px 8px;min-width:160px;max-width:220px"></div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px">
+              <div style="font-size:11px;color:var(--text3)">Ολοκληρωμένες</div>
+              <div style="font-size:22px;font-weight:700;color:#22c55e" id="dash-r-done">—</div>
             </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3);margin-bottom:4px">ΦΑΚ</div>
-              <input class="filter-select" id="dash-f-fak" placeholder="π.χ. GPL 35" oninput="renderStats()" style="min-width:120px">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px">
+              <div style="font-size:11px;color:var(--text3)">Σε Εξέλιξη</div>
+              <div style="font-size:22px;font-weight:700;color:#f97316" id="dash-r-pending">—</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px">
+              <div style="font-size:11px;color:var(--text3)">Μέσος Χρόνος</div>
+              <div style="font-size:22px;font-weight:700;color:var(--text)" id="dash-r-avg">— ημ.</div>
+            </div>
+          </div>
+          <!-- Μπάρες Μηχανικών -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px">Κατανομή ανά Μηχανικό / Αιτών</div>
+            <div id="dash-mhx-breakdown"></div>
+          </div>
+          <!-- Χρόνος Διεκπεραίωσης -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px">Χρόνος Διεκπεραίωσης <span style="font-size:11px;color:var(--text3);font-weight:400">(Τελικό − Ημ.Χρέωσης)</span></div>
+            <div style="max-height:280px;overflow-y:auto">
+              <table class="tbl" style="font-size:12px">
+                <thead><tr><th>ΦΑΚ</th><th>Αρ.Εισ.</th><th>Ημ.Χρέωσης</th><th>Τελικό</th><th>Ημέρες</th><th>Αίτημα</th><th>Μηχ/κός</th></tr></thead>
+                <tbody id="dash-completion-tbody"></tbody>
+              </table>
             </div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+
+        <!-- ΔΕΞΙΑ: Πίνακας κινήσεων πρωτοκόλλου -->
+        <div style="overflow-y:auto;max-height:calc(100vh - 220px)">
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
-            <div style="font-size:11px;color:var(--text3)">Κινήσεις (φίλτρο)</div>
-            <div style="font-size:24px;font-weight:700;color:var(--accent)" id="dash-r-total">—</div>
-          </div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
-            <div style="font-size:11px;color:var(--text3)">Ολοκληρωμένες</div>
-            <div style="font-size:24px;font-weight:700;color:#22c55e" id="dash-r-done">—</div>
-          </div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
-            <div style="font-size:11px;color:var(--text3)">Σε Εξέλιξη</div>
-            <div style="font-size:24px;font-weight:700;color:#f97316" id="dash-r-pending">—</div>
-          </div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px">
-            <div style="font-size:11px;color:var(--text3)">Μέσος Χρόνος Διεκπ.</div>
-            <div style="font-size:24px;font-weight:700;color:var(--text)" id="dash-r-avg">— ημ.</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px" id="dash-proto-list-title">Κινήσεις Πρωτοκόλλου <span id="dash-proto-list-count" style="font-size:11px;color:var(--text3);font-weight:400"></span></div>
+            <div style="overflow-y:auto;max-height:calc(100vh - 310px)">
+              <table class="tbl" style="font-size:12px">
+                <thead><tr>
+                  <th>ΦΑΚ</th><th>Αρ.Εισ.</th><th>Ημ.Χρέωσης</th><th>Αιτών</th><th>Αίτημα</th><th>Κατάσταση</th>
+                </tr></thead>
+                <tbody id="dash-proto-list-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Κατανομή ανά Μηχανικό / Αιτών</div>
-          <div id="dash-mhx-breakdown"></div>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Χρόνος Διεκπεραίωσης <span style="font-size:11px;color:var(--text3);font-weight:400">(Τελικό − Ημ.Χρέωσης)</span></div>
-          <div style="max-height:400px;overflow-y:auto">
-            <table class="tbl" style="font-size:12px">
-              <thead><tr><th>ΦΑΚ</th><th>Αρ.Εισ.</th><th>Ημ.Χρέωσης</th><th>Τελικό</th><th>Ημέρες</th><th>Αίτημα</th><th>Μηχ/κός</th></tr></thead>
-              <tbody id="dash-completion-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+
       </div>
     </div>
 
