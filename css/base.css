@@ -27,6 +27,8 @@ button,input,select,textarea{font-family:inherit}
 /* ── LAYOUT ── */
 .view{display:none;flex-direction:column;height:calc(100vh - 98px);overflow:hidden}
 .view.active{display:flex}
+/* Views που χρειάζονται scroll ολόκληρης της σελίδας */
+#view-stats.active, #view-inst-stats.active{overflow-y:auto;}
 .toolbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:7px 16px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;flex-shrink:0}
 .toolbar-title{font-size:14px;font-weight:600;color:#1a1f2e;white-space:nowrap;margin-right:4px}
 .toolbar-spacer{flex:1}
