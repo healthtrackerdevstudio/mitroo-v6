@@ -270,6 +270,48 @@ function renderStats(){
       }).join('');
     }
   }
+
+  // ── Πίνακας κινήσεων (δεξιά στήλη) ──
+  const protoTbody=document.getElementById('dash-proto-list-tbody');
+  const protoCount=document.getElementById('dash-proto-list-count');
+  if(protoTbody){
+    const sorted=[...arr].sort(function(a,b){
+      return (b.hm_xreosis||'').localeCompare(a.hm_xreosis||'');
+    });
+    if(protoCount) protoCount.textContent='('+sorted.length+')';
+    if(!sorted.length){
+      protoTbody.innerHTML='<tr><td colspan="6" class="table-empty">Δεν βρέθηκαν κινήσεις</td></tr>';
+    } else {
+      protoTbody.innerHTML=sorted.map(function(p){
+        const phase=p.rejected?'<span class="badge badge-red" style="font-size:10px">❌</span>'
+          :p.teliko?'<span class="badge badge-green" style="font-size:10px">✓</span>'
+          :p.hm_exerx?'<span class="badge badge-yellow" style="font-size:10px">→</span>'
+          :'<span class="badge badge-blue" style="font-size:10px">⏳</span>';
+        return '<tr style="cursor:pointer" onclick="openProtoModal(\''+esc(p._id||'')+'\')">'
+          +'<td class="mono" style="font-size:11px"><strong>'+esc(p.fak)+'</strong></td>'
+          +'<td class="mono muted" style="font-size:11px">'+esc(p.proto_eisx)+'</td>'
+          +'<td class="mono" style="font-size:11px">'+fmtDate(p.hm_xreosis)+'</td>'
+          +'<td style="font-size:11px">'+esc(p.aition)+'</td>'
+          +'<td style="font-size:11px">'+esc(p.aitima)+'</td>'
+          +'<td>'+phase+'</td>'
+          +'</tr>';
+      }).join('');
+    }
+  }
+}
+
+// ── Toggle γραφημάτων (αριστερή στήλη) ──
+let _statsBarsVisible=true;
+function statsToggleBars(){
+  _statsBarsVisible=!_statsBarsVisible;
+  const col=document.getElementById('stats-bars-col');
+  const layout=document.getElementById('stats-main-layout');
+  const btn=document.getElementById('stats-toggle-bars');
+  if(col){
+    col.style.display=_statsBarsVisible?'':'none';
+    if(layout) layout.style.gridTemplateColumns=_statsBarsVisible?'1fr 1fr':'1fr';
+    if(btn) btn.style.opacity=_statsBarsVisible?'1':'0.5';
+  }
 }
 
 function resetDashFilters(){
