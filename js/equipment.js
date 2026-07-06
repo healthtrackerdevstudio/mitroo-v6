@@ -19,24 +19,53 @@ function addPumpRow(type='',eidos='',products='',epistomia=''){
   document.getElementById('ef-pumps-list').appendChild(row);
 }
 
-function addTankRow(fuel='',liters='',mitroo='',ogkom=''){
+function addTankRow(fuel='',liters='',mitroo='',ogkom='',abolished=false,abolishedRef=''){
   const row=document.createElement('div');
   row.className='tank-row';
-  row.style.cssText='display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:#f8f9fa;padding:8px;border-radius:6px;border:1px solid #e2e8f0';
+  const rowBg=abolished?'#f8fafc':'#f8f9fa';
+  const rowBorder=abolished?'#e2e8f0':'#e2e8f0';
+  row.style.cssText=`display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;background:${rowBg};padding:8px;border-radius:6px;border:1px solid ${rowBorder};${abolished?'opacity:0.6':''}`;
   row.innerHTML=
-    `<input class="form-control tank-mitroo" placeholder="Αρ.Μητρώου (π.χ. 12345678-Τ-39-12345)" style="flex:2;min-width:180px" value="${mitroo||''}" title="Μορφή: 12345678-Τ-39-12345">` +
+    `<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">` +
+    `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">` +
+    `<input class="form-control tank-mitroo" placeholder="Αρ.Μητρώου (π.χ. 12345678-Τ-39-12345)" style="flex:2;min-width:180px${abolished?';text-decoration:line-through;color:var(--text3)':''}" value="${mitroo||''}" title="Μορφή: 12345678-Τ-39-12345">` +
     `<select class="form-control tank-fuel" style="flex:1;min-width:120px" onchange="checkCustomFuel(this);updateTankSummary()">` +
     `<option value="">— Καύσιμο —</option>` +
     FUEL_TYPES.map(f=>`<option${f===fuel?' selected':''}>${f}</option>`).join('') +
     `<option value="__custom__"${!FUEL_TYPES.includes(fuel)&&fuel?' selected':''}>Άλλο…</option>` +
     `</select>` +
     `<input class="form-control tank-fuel-custom" placeholder="Νέο καύσιμο" style="width:110px;display:${!FUEL_TYPES.includes(fuel)&&fuel?'block':'none'}" value="${!FUEL_TYPES.includes(fuel)&&fuel?fuel:''}" oninput="updateTankSummary()">` +
-    `<input class="form-control tank-liters" title="Εισάγετε λίτρα με . ή , ως δεκαδικό (π.χ. 10000 ή 10000.50)" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:100px" value="${liters||''}" oninput="updateTankSummary()">` +
+    `<input class="form-control tank-liters" title="Εισάγετε λίτρα με . ή , ως δεκαδικό" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:100px" value="${liters||''}" oninput="updateTankSummary()">` +
     `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:130px" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
-    `<button type="button" class="btn-icon" onclick="this.closest('.tank-row').remove();updateTankSummary()" title="Αφαίρεση">✕</button>`;
+    `<button type="button" class="btn-icon" onclick="this.closest('.tank-row').remove();updateTankSummary()" title="Αφαίρεση">✕</button>` +
+    `</div>` +
+    // Κατάργηση row
+    `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">` +
+    `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:${abolished?'#dc2626':'var(--text3)'}">` +
+    `<input type="checkbox" class="tank-abolished" ${abolished?'checked':''} onchange="tankAbolishedToggle(this)" style="cursor:pointer">` +
+    `Κατηργήθηκε` +
+    `</label>` +
+    `<input class="form-control tank-abolished-ref" placeholder="Αρ. Απόφασης κατάργησης" style="width:220px;display:${abolished?'':'none'}" value="${abolishedRef||''}">` +
+    `</div>` +
+    `</div>`;
   document.getElementById('ef-tanks-list').appendChild(row);
   updateTankSummary();
 }
+
+function tankAbolishedToggle(cb){
+  const row=cb.closest('.tank-row');
+  const refInp=row.querySelector('.tank-abolished-ref');
+  const mitroo=row.querySelector('.tank-mitroo');
+  const abolished=cb.checked;
+  if(refInp) refInp.style.display=abolished?'':'none';
+  row.style.opacity=abolished?'0.6':'1';
+  row.style.background=abolished?'#f8fafc':'#f8f9fa';
+  if(mitroo) mitroo.style.textDecoration=abolished?'line-through':'';
+  if(mitroo) mitroo.style.color=abolished?'var(--text3)':'';
+  cb.closest('label').style.color=abolished?'#dc2626':'var(--text3)';
+  updateTankSummary();
+}
+
 
 function updateTankSummary(){
   const summary=document.getElementById('ef-tank-summary');
@@ -45,6 +74,9 @@ function updateTankSummary(){
   const rows=[...document.querySelectorAll('.tank-row')];
   const totals={};
   rows.forEach(function(row){
+    // Εξαιρούμε κατηργημένες δεξαμενές από τον υπολογισμό
+    const abolishedCb=row.querySelector('.tank-abolished');
+    if(abolishedCb&&abolishedCb.checked) return;
     const sel=row.querySelector('.tank-fuel');
     const custom=row.querySelector('.tank-fuel-custom');
     const fuel=sel&&sel.value==='__custom__'?(custom?custom.value.trim():''):(sel?sel.value:'');
@@ -152,8 +184,10 @@ function renderEquip(){
     const tanks=e.tanks||[];
     let tanksCell='<span class="eq-empty">—</span>';
     if(tanks.length){
-      const fuelAgg={}; // {fuel: {liters, count}}
-      tanks.forEach(t=>{
+      const activeTanks=tanks.filter(t=>!t.abolished);
+      const abolishedTanks=tanks.filter(t=>t.abolished);
+      const fuelAgg={};
+      activeTanks.forEach(t=>{
         const f=t.fuel||'?';
         if(!fuelAgg[f]) fuelAgg[f]={liters:0,count:0};
         fuelAgg[f].liters+=Number(t.liters||0);
@@ -164,8 +198,10 @@ function renderEquip(){
         .sort((a,b)=>b[1].liters-a[1].liters)
         .map(([f,v])=>`<span class="eq-pill ${fuelClass(f)}" title="${v.count} δεξ.">${esc(f)} <strong>${fmtL(v.liters)}L</strong></span>`)
         .join('');
+      const abolBadge=abolishedTanks.length
+        ?`<span style="font-size:10px;color:#dc2626;margin-left:4px" title="${abolishedTanks.map(t=>t.mitroo||'').join(', ')}">❌ ${abolishedTanks.length} κατηργ.</span>`:'';
       tanksCell=`<div class="eq-cell">
-        <div class="eq-cell-head"><span class="eq-count">${tanks.length}</span> δεξ. · <span style="color:#475569;font-weight:500">${fmtL(grand)} L</span></div>
+        <div class="eq-cell-head"><span class="eq-count">${activeTanks.length}</span> ενεργές · <span style="color:#475569;font-weight:500">${fmtL(grand)} L</span>${abolBadge}</div>
         <div class="eq-pills">${pills}</div>
       </div>`;
     }
@@ -271,7 +307,7 @@ function openEquipModal(fak=null){
   const tanksList=document.getElementById('ef-tanks-list');
   tanksList.innerHTML='';
   const tanks=eq.tanks||[];
-  if(tanks.length)tanks.forEach(t=>addTankRow(t.fuel,t.liters,t.mitroo||'',t.ogkom||''));
+  if(tanks.length)tanks.forEach(t=>addTankRow(t.fuel,t.liters,t.mitroo||'',t.ogkom||'',t.abolished||false,t.abolished_ref||''));
   else addTankRow();
   updateTankSummary();
   const extraList=document.getElementById('ef-extra-list');
@@ -389,11 +425,15 @@ function saveEquip(){
     const fuelCustom=row.querySelector('.tank-fuel-custom');
     const fuelVal=fuelSel&&fuelSel.value==='__custom__'?(fuelCustom?fuelCustom.value.trim():''):( fuelSel?fuelSel.value.trim():'');
     const ogkomEl=row.querySelector('.tank-ogkom');
+    const abolishedCb=row.querySelector('.tank-abolished');
+    const abolishedRefEl=row.querySelector('.tank-abolished-ref');
     return {
       mitroo:row.querySelector('.tank-mitroo').value.trim(),
       fuel:fuelVal,
       liters:parseFloat((row.querySelector('.tank-liters').value||'').replace(',','.'))||0,
-      ogkom:ogkomEl?ogkomEl.value.trim():''
+      ogkom:ogkomEl?ogkomEl.value.trim():'',
+      abolished:!!(abolishedCb&&abolishedCb.checked),
+      abolished_ref:abolishedRefEl?abolishedRefEl.value.trim():''
     };
   }).filter(t=>t.fuel||t.liters||t.mitroo);
   // Collect extra equipment

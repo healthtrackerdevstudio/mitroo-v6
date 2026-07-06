@@ -275,10 +275,22 @@ function renderStats(){
   const protoTbody=document.getElementById('dash-proto-list-tbody');
   const protoCount=document.getElementById('dash-proto-list-count');
   if(protoTbody){
+    // Sort
+    const col=_statsProtoSort.col;
+    const dir=_statsProtoSort.dir;
     const sorted=[...arr].sort(function(a,b){
-      return (b.hm_xreosis||'').localeCompare(a.hm_xreosis||'');
+      const av=a[col]||'', bv=b[col]||'';
+      return av.localeCompare(bv)*dir;
     });
     if(protoCount) protoCount.textContent='('+sorted.length+')';
+    // Ενημέρωση sort arrows στα headers
+    ['fak','proto_eisx','hm_xreosis','aition','energeia'].forEach(function(c){
+      const th=document.getElementById('dash-proto-th-'+c);
+      if(th){
+        const arrow=th.querySelector('.sa');
+        if(arrow) arrow.textContent=col===c?(dir===1?'↑':'↓'):'↕';
+      }
+    });
     if(!sorted.length){
       protoTbody.innerHTML='<tr><td colspan="6" class="table-empty">Δεν βρέθηκαν κινήσεις</td></tr>';
     } else {
@@ -292,12 +304,20 @@ function renderStats(){
           +'<td class="mono muted" style="font-size:11px">'+esc(p.proto_eisx)+'</td>'
           +'<td class="mono" style="font-size:11px">'+fmtDate(p.hm_xreosis)+'</td>'
           +'<td style="font-size:11px">'+esc(p.aition)+'</td>'
-          +'<td style="font-size:11px">'+esc(p.aitima)+'</td>'
+          +'<td style="font-size:11px;color:var(--text2)">'+esc(p.energeia||'—')+'</td>'
           +'<td>'+phase+'</td>'
           +'</tr>';
       }).join('');
     }
   }
+}
+
+// ── Sort state για πίνακα κινήσεων ──
+let _statsProtoSort={col:'hm_xreosis',dir:-1};
+function statsProtoSortBy(col){
+  if(_statsProtoSort.col===col) _statsProtoSort.dir*=-1;
+  else { _statsProtoSort.col=col; _statsProtoSort.dir=1; }
+  renderStats();
 }
 
 // ── Toggle γραφημάτων (αριστερή στήλη) ──

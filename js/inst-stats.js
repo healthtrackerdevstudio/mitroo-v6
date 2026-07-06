@@ -190,8 +190,19 @@ function printInstReport(fak){
     eq.extra_equip.forEach(function(e){if(e) equipList.push(e);});
   }
 
-  const tanksHtml=(eq.tanks||[]).length?'<table style="width:100%;border-collapse:collapse;margin-top:6px"><tr style="background:#f0f0f0"><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Αρ.Μητρώου</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Καύσιμο</th><th style="padding:4px 8px;text-align:right;border:1px solid #ddd">Λίτρα</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Ογκομετρητής</th></tr>'
-    +(eq.tanks||[]).map(function(t){return '<tr><td style="padding:4px 8px;border:1px solid #ddd">'+esc(t.mitroo||'')+'</td><td style="padding:4px 8px;border:1px solid #ddd">'+esc(t.fuel||'')+'</td><td style="padding:4px 8px;border:1px solid #ddd;text-align:right">'+(t.liters?Number(t.liters).toLocaleString('el-GR'):'—')+'</td><td style="padding:4px 8px;border:1px solid #ddd">'+esc(t.ogkom||'')+'</td></tr>';}).join('')
+  const tanksHtml=(eq.tanks||[]).length?'<table style="width:100%;border-collapse:collapse;margin-top:6px"><tr style="background:#f0f0f0"><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Αρ.Μητρώου</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Καύσιμο</th><th style="padding:4px 8px;text-align:right;border:1px solid #ddd">Λίτρα</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Ογκομετρητής</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Κατάσταση</th></tr>'
+    +(eq.tanks||[]).map(function(t){
+      const isAbolished=t.abolished;
+      const rowStyle=isAbolished?'background:#fef2f2;color:#9ca3af;text-decoration:line-through':'';
+      const status=isAbolished?('<span style="color:#dc2626;font-weight:600;text-decoration:none">❌ Κατηργήθηκε'+(t.abolished_ref?' ('+esc(t.abolished_ref)+')':'')+'</span>'):'<span style="color:#16a34a">✓ Ενεργή</span>';
+      return '<tr style="'+rowStyle+'">'
+        +'<td style="padding:4px 8px;border:1px solid #ddd">'+esc(t.mitroo||'')+'</td>'
+        +'<td style="padding:4px 8px;border:1px solid #ddd">'+esc(t.fuel||'')+'</td>'
+        +'<td style="padding:4px 8px;border:1px solid #ddd;text-align:right">'+(t.liters?Number(t.liters).toLocaleString('el-GR'):'—')+'</td>'
+        +'<td style="padding:4px 8px;border:1px solid #ddd">'+esc(t.ogkom||'')+'</td>'
+        +'<td style="padding:4px 8px;border:1px solid #ddd;text-decoration:none">'+status+'</td>'
+        +'</tr>';
+    }).join('')
     +'</table>':'<em style="color:#666">Δεν έχουν καταχωρηθεί δεξαμενές</em>';
 
   const certsHtml=fakCerts.length?'<table style="width:100%;border-collapse:collapse;margin-top:6px"><tr style="background:#f0f0f0"><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Τύπος</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Αρ./Κωδ.</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Έκδοση</th><th style="padding:4px 8px;text-align:left;border:1px solid #ddd">Λήξη / Κατάσταση</th></tr>'
