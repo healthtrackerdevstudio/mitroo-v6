@@ -22,32 +22,23 @@ function addPumpRow(type='',eidos='',products='',epistomia=''){
 function addTankRow(fuel='',liters='',mitroo='',ogkom='',abolished=false,abolishedRef=''){
   const row=document.createElement('div');
   row.className='tank-row';
-  const rowBg=abolished?'#f8fafc':'#f8f9fa';
-  const rowBorder=abolished?'#e2e8f0':'#e2e8f0';
-  row.style.cssText=`display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;background:${rowBg};padding:8px;border-radius:6px;border:1px solid ${rowBorder};${abolished?'opacity:0.6':''}`;
+  row.style.cssText=`display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:${abolished?'#f8fafc':'#f8f9fa'};padding:8px;border-radius:6px;border:1px solid #e2e8f0;${abolished?'opacity:0.65':''}`;
   row.innerHTML=
-    `<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">` +
-    `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">` +
-    `<input class="form-control tank-mitroo" placeholder="Αρ.Μητρώου (π.χ. 12345678-Τ-39-12345)" style="flex:2;min-width:180px${abolished?';text-decoration:line-through;color:var(--text3)':''}" value="${mitroo||''}" title="Μορφή: 12345678-Τ-39-12345">` +
-    `<select class="form-control tank-fuel" style="flex:1;min-width:120px" onchange="checkCustomFuel(this);updateTankSummary()">` +
+    `<input class="form-control tank-mitroo" placeholder="Αρ.Μητρώου" style="flex:2;min-width:160px${abolished?';text-decoration:line-through;color:var(--text3)':''}" value="${mitroo||''}" title="Μορφή: 12345678-Τ-39-12345">` +
+    `<select class="form-control tank-fuel" style="flex:1;min-width:110px" onchange="checkCustomFuel(this);updateTankSummary()">` +
     `<option value="">— Καύσιμο —</option>` +
     FUEL_TYPES.map(f=>`<option${f===fuel?' selected':''}>${f}</option>`).join('') +
     `<option value="__custom__"${!FUEL_TYPES.includes(fuel)&&fuel?' selected':''}>Άλλο…</option>` +
     `</select>` +
-    `<input class="form-control tank-fuel-custom" placeholder="Νέο καύσιμο" style="width:110px;display:${!FUEL_TYPES.includes(fuel)&&fuel?'block':'none'}" value="${!FUEL_TYPES.includes(fuel)&&fuel?fuel:''}" oninput="updateTankSummary()">` +
-    `<input class="form-control tank-liters" title="Εισάγετε λίτρα με . ή , ως δεκαδικό" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:100px" value="${liters||''}" oninput="updateTankSummary()">` +
-    `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:130px" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
-    `<button type="button" class="btn-icon" onclick="this.closest('.tank-row').remove();updateTankSummary()" title="Αφαίρεση">✕</button>` +
-    `</div>` +
-    // Κατάργηση row
-    `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">` +
-    `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:${abolished?'#dc2626':'var(--text3)'}">` +
+    `<input class="form-control tank-fuel-custom" placeholder="Νέο καύσιμο" style="width:100px;display:${!FUEL_TYPES.includes(fuel)&&fuel?'block':'none'}" value="${!FUEL_TYPES.includes(fuel)&&fuel?fuel:''}" oninput="updateTankSummary()">` +
+    `<input class="form-control tank-liters" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:90px" value="${liters||''}" oninput="updateTankSummary()">` +
+    `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:120px" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
+    // Κατάργηση — inline
+    `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:${abolished?'#dc2626':'var(--text3)'};white-space:nowrap" title="Κατηργήθηκε">` +
     `<input type="checkbox" class="tank-abolished" ${abolished?'checked':''} onchange="tankAbolishedToggle(this)" style="cursor:pointer">` +
-    `Κατηργήθηκε` +
-    `</label>` +
-    `<input class="form-control tank-abolished-ref" placeholder="Αρ. Απόφασης κατάργησης" style="width:220px;display:${abolished?'':'none'}" value="${abolishedRef||''}">` +
-    `</div>` +
-    `</div>`;
+    `<span>❌</span></label>` +
+    `<input class="form-control tank-abolished-ref" placeholder="Αρ. Απόφ. κατάργησης" style="width:160px;display:${abolished?'':'none'}" value="${abolishedRef||''}" title="Αριθμός Απόφασης Κατάργησης">` +
+    `<button type="button" class="btn-icon" onclick="this.closest('.tank-row').remove();updateTankSummary()" title="Αφαίρεση">✕</button>`;
   document.getElementById('ef-tanks-list').appendChild(row);
   updateTankSummary();
 }

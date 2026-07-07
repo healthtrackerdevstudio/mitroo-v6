@@ -57,24 +57,40 @@ function nomosIdbLoad(){
 
 // ── Load index ──
 async function nomosLoadIndex(){
-  // 1. IndexedDB (κύριο, γρήγορο)
+  // 1. IndexedDB (κύριο, γρήγορο, τοπικό)
   const idb = await nomosIdbLoad();
-  if(idb && idb.length){ nomosIndex=idb; console.log('[nomos] Loaded from IndexedDB:',nomosIndex.length); return; }
 
-  // 2. Firestore chunks (backup)
+  // 2. Firestore (για cross-device ή μετά από καθαρισμό browser)
+  let fstore = [];
   if(typeof USE_FIREBASE!=='undefined' && USE_FIREBASE && typeof db!=='undefined' && db){
     try{
       let all=[];
-      for(let c=0;c<20;c++){
+      for(let c=0;c<30;c++){
         const snap=await db.collection('nomosIndex').doc('chunk_'+c).get();
         if(!snap.exists) break;
         all=all.concat(snap.data().items||[]);
       }
-      if(all.length){ nomosIndex=all; await nomosIdbSave(nomosIndex);
-        console.log('[nomos] Loaded from Firestore:',nomosIndex.length); return; }
+      fstore = all;
     }catch(e){ console.warn('[nomos] Firestore load error:',e); }
   }
-  console.log('[nomos] No existing index found');
+
+  // Χρησιμοποιούμε αυτό που έχει ΠΕΡΙΣΣΟΤΕΡΕΣ εγγραφές
+  const idbCount = idb ? idb.length : 0;
+  const fsCount  = fstore.length;
+
+  if(idbCount===0 && fsCount===0){
+    console.log('[nomos] No existing index found');
+    return;
+  }
+
+  if(idbCount >= fsCount){
+    nomosIndex = idb || [];
+    console.log('[nomos] Loaded from IndexedDB:',nomosIndex.length);
+  } else {
+    nomosIndex = fstore;
+    await nomosIdbSave(nomosIndex); // sync Firestore → IndexedDB
+    console.log('[nomos] Loaded from Firestore:',nomosIndex.length,'(IndexedDB had',idbCount,')');
+  }
 }
 
 // ── Save index ──
@@ -242,12 +258,17 @@ async function nomosStartIndexing(){
         nomosSetProgress(done,Math.max(done,6989),
           `${done} επεξεργάστηκαν · ${newCount} νέα indexed · σύνολο: ${nomosIndex.length}`);
 
-        // IndexedDB save κάθε 50 νέα (γρήγορο, χωρίς Firestore quota)
+        // IndexedDB save κάθε 50 νέα
         if(newCount%50===0){
           await nomosIdbSave(nomosIndex);
-          await new Promise(r=>setTimeout(r,100)); // yield
+          // Firestore save κάθε 200 νέα (με παύση για να μην εξαντληθεί το quota)
+          if(newCount%200===0){
+            await nomosSaveIndex(true);
+            toast(`💾 Checkpoint: ${nomosIndex.length} αρχεία αποθηκεύτηκαν`,'info');
+          }
+          await new Promise(r=>setTimeout(r,100));
         } else {
-          await new Promise(r=>setTimeout(r,8)); // μικρό yield
+          await new Promise(r=>setTimeout(r,8));
         }
       },
       isStopped:()=>!nomosIndexing
