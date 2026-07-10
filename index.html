@@ -956,7 +956,10 @@
       <div class="form-grid">
         <div class="form-group">
           <label>ΦΑΚ <span class="req">*</span></label>
-          <input class="form-control" id="if-fak" placeholder="π.χ. GPL 35_10">
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="form-control" id="if-fak" placeholder="π.χ. GPL 35_10" style="flex:1">
+            <button type="button" id="if-fak-unlock-btn" class="btn btn-secondary btn-sm" style="display:none;white-space:nowrap" title="Επεξεργασία ΦΑΚ — θα ενημερωθούν και οι σχετικές εγγραφές" onclick="instUnlockFak()">✏️ Αλλαγή ΦΑΚ</button>
+          </div>
         </div>
         <div class="form-group">
           <label>Τμήμα / Φύλλο <span style="color:#dc2626">*</span></label>
