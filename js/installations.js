@@ -97,6 +97,9 @@ function openInstModal(fak=null){
   const f=id=>document.getElementById(id);
   f('if-fak').value=i?i.fak:'';
   f('if-fak').disabled=!!fak;
+  // Κουμπί αλλαγής ΦΑΚ — εμφανίζεται μόνο σε επεξεργασία υπάρχουσας
+  const unlockBtn=document.getElementById('if-fak-unlock-btn');
+  if(unlockBtn) unlockBtn.style.display=fak?'':'none';
   f('if-sheet').value=i?i.sheet:'';
   f('if-name').value=i?i.name:'';
   f('if-afm').value=i?i.afm:'';
@@ -334,6 +337,25 @@ function saveInst(){
   };
   if(editInstId){
     const idx=installations.findIndex(i=>i.fak===editInstId);
+    // Ανίχνευση αλλαγής ΦΑΚ
+    if(fak !== editInstId){
+      // Έλεγχος αν το νέο ΦΑΚ υπάρχει ήδη
+      if(installations.find(i=>i.fak===fak)){
+        toast('Το ΦΑΚ "'+fak+'" υπάρχει ήδη — επέλεξε διαφορετικό','error');
+        return;
+      }
+      // Cascade rename σε όλα τα modules
+      const cascadeResult=instRenameFakCascade(editInstId, fak);
+      if(idx>=0) installations[idx]={...installations[idx],...obj};
+      else installations.push(obj);
+      save('inst',installations);
+      closeModal('modal-inst');
+      const msg='✓ ΦΑΚ άλλαξε: '+editInstId+' → '+fak+'\n'
+        +'Πρωτόκολλο: '+cascadeResult.proto+' · Πιστ/κά: '+cascadeResult.certs+' · Εξοπλ: '+cascadeResult.equip;
+      toast(msg,'success');
+      try{ updateBadges(); renderInst(); renderProto(); renderCerts(); renderEquip(); }catch(e){}
+      return;
+    }
     if(idx>=0)installations[idx]={...installations[idx],...obj};
     else installations.push(obj);
   } else {
@@ -360,6 +382,44 @@ function deleteInst(fak){
   toast('🗑 Εγκατάσταση «'+fak+'» διαγράφηκε'+(extra.length?' (+ '+extra.join(', ')+')':''),'info');
 }
 
+
+// ── Ξεκλείδωμα ΦΑΚ για διόρθωση ──────────────────────────────────
+function instUnlockFak(){
+  const oldFak=document.getElementById('if-fak').value.trim();
+  if(!confirm(
+    '⚠️ Αλλαγή ΦΑΚ\n\n'+
+    'Το ΦΑΚ είναι μοναδικό αναγνωριστικό.\n'+
+    'Αν το αλλάξεις, θα ενημερωθούν αυτόματα:\n'+
+    '• Πρωτόκολλο\n• Πιστοποιητικά\n• Εξοπλισμός\n\n'+
+    'Τρέχον ΦΑΚ: '+oldFak+'\n\n'+
+    'Συνέχεια;'
+  )) return;
+  const inp=document.getElementById('if-fak');
+  inp.disabled=false;
+  inp.focus();
+  inp.select();
+  inp.style.border='2px solid #f97316';
+  inp.title='Πληκτρολόγησε το νέο ΦΑΚ — η αλλαγή θα εφαρμοστεί στην Αποθήκευση';
+  const btn=document.getElementById('if-fak-unlock-btn');
+  if(btn){ btn.textContent='⚠️ Σε αλλαγή…'; btn.disabled=true; }
+}
+
+// ── Cascade rename ΦΑΚ σε όλα τα modules ──────────────────────────
+function instRenameFakCascade(oldFak, newFak){
+  let changed=0;
+  // Πρωτόκολλο
+  protocol.forEach(p=>{ if(p.fak===oldFak){p.fak=newFak;changed++;} });
+  if(changed) save('proto',protocol);
+  // Πιστοποιητικά
+  let cc=0;
+  certificates.forEach(c=>{ if(c.fak===oldFak){c.fak=newFak;cc++;} });
+  if(cc) save('certs',certificates);
+  // Εξοπλισμός
+  let ce=0;
+  equipment.forEach(e=>{ if(e.fak===oldFak){e.fak=newFak;ce++;} });
+  if(ce) save('equip',equipment);
+  return {proto:changed, certs:cc, equip:ce};
+}
 
 // ── Τακτοποίηση toggle ──
 function toggleTaktopoi(cb){
