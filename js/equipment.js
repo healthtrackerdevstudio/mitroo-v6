@@ -307,12 +307,48 @@ function openEquipModal(fak=null){
   // Conditional sections βάσει τύπου εγκατάστασης
   const inst = installations.find(i=>i.fak===fak)||{};
   const instType = inst.type||'';
+  const STATHMOS_TYPES=['Στεγασμένος Σταθμός','Υπαίθριος Σταθμός','Σταθμός Βαρέων Οχημάτων','Parking Σκαφών'];
   const showIkteo = instType==='ΙΚΤΕΟ';
   const showAnypt = ['Συνεργείο','Πλυντήριο','Λιπαντήριο'].includes(instType);
+  const showStathmos = STATHMOS_TYPES.includes(instType);
   const ikteoSec = document.getElementById('eq-ikteo-section');
   const anyptSec = document.getElementById('eq-anyptotika-section');
+  const statSec  = document.getElementById('eq-stathmos-section');
   if(ikteoSec) ikteoSec.style.display = showIkteo ? 'block' : 'none';
   if(anyptSec) anyptSec.style.display = showAnypt ? 'block' : 'none';
+  if(statSec)  statSec.style.display  = showStathmos ? 'block' : 'none';
+  // Φόρτωση στοιχείων σταθμού
+  if(showStathmos){
+    const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+    const sc=(id,v)=>{const el=document.getElementById(id);if(el)el.checked=!!v;};
+    const katDefault=instType==='Στεγασμένος Σταθμός'?'Στεγασμένος'
+      :instType==='Υπαίθριος Σταθμός'?'Υπαίθριος'
+      :instType==='Σταθμός Βαρέων Οχημάτων'?'Βαρέων Οχημάτων'
+      :instType==='Parking Σκαφών'?'Σκαφών':'';
+    sv('ef-stath-kat', eq.stath_kat||katDefault);
+    sv('ef-stath-megethos', eq.stath_megethos||'');
+    sv('ef-stath-theseis',  eq.stath_theseis||'');
+    sv('ef-stath-amea',     eq.stath_amea||'');
+    sv('ef-stath-orario',   eq.stath_orario||'');
+    sv('ef-stath-exyp',     eq.stath_exyp||'');
+    sv('ef-stath-kinisi',   eq.stath_kinisi||'');
+    sv('ef-stath-ypogeia',  eq.stath_ypogeia||'');
+    sv('ef-stath-ypergeia', eq.stath_ypergeia||'');
+    sc('ef-stath-ev',       eq.stath_ev);
+    sv('ef-stath-ev-theseis',   eq.stath_ev_theseis||'');
+    sv('ef-stath-ev-fortistes', eq.stath_ev_fortistes||'');
+    sc('ef-stath-pratir',   eq.stath_pratir);
+    sc('ef-stath-plyntirio',eq.stath_plyntirio);
+    sv('ef-stath-co',       eq.stath_co||'');
+    sv('ef-stath-co-aisth', eq.stath_co_aisth||'');
+    sv('ef-stath-co-ref',   eq.stath_co_ref||'');
+    // Εφαρμογή toggle για EV
+    const evWrap=document.getElementById('ef-stath-ev-wrap');
+    const evCb=document.getElementById('ef-stath-ev');
+    if(evWrap&&evCb) evWrap.style.display=evCb.checked?'flex':'none';
+    stathToggleOrario();
+    stathCheckCO();
+  }
   // Φόρτωση διαδρόμων ΙΚΤΕΟ
   if(showIkteo){
     const dList = document.getElementById('ef-diadromoi-list');
@@ -457,7 +493,25 @@ function saveEquip(){
     diadromoi:collectDiadromoi(),
     anyptotika:collectAnyptotika(),
     elaiod_yparksi:(document.getElementById('ef-elaiod-yparksi')||{value:''}).value,
-    elaiod_en858:(document.getElementById('ef-elaiod-en858')||{value:''}).value
+    elaiod_en858:(document.getElementById('ef-elaiod-en858')||{value:''}).value,
+    // Στοιχεία σταθμού αυτοκινήτων
+    stath_kat:       (document.getElementById('ef-stath-kat')||{value:''}).value,
+    stath_megethos:  (document.getElementById('ef-stath-megethos')||{value:''}).value,
+    stath_theseis:   (document.getElementById('ef-stath-theseis')||{value:''}).value,
+    stath_amea:      (document.getElementById('ef-stath-amea')||{value:''}).value,
+    stath_orario:    (document.getElementById('ef-stath-orario')||{value:''}).value,
+    stath_exyp:      (document.getElementById('ef-stath-exyp')||{value:''}).value,
+    stath_kinisi:    (document.getElementById('ef-stath-kinisi')||{value:''}).value,
+    stath_ypogeia:   (document.getElementById('ef-stath-ypogeia')||{value:''}).value,
+    stath_ypergeia:  (document.getElementById('ef-stath-ypergeia')||{value:''}).value,
+    stath_ev:        !!(document.getElementById('ef-stath-ev')&&document.getElementById('ef-stath-ev').checked),
+    stath_ev_theseis:(document.getElementById('ef-stath-ev-theseis')||{value:''}).value,
+    stath_ev_fortistes:(document.getElementById('ef-stath-ev-fortistes')||{value:''}).value,
+    stath_pratir:    !!(document.getElementById('ef-stath-pratir')&&document.getElementById('ef-stath-pratir').checked),
+    stath_plyntirio: !!(document.getElementById('ef-stath-plyntirio')&&document.getElementById('ef-stath-plyntirio').checked),
+    stath_co:        (document.getElementById('ef-stath-co')||{value:''}).value,
+    stath_co_aisth:  (document.getElementById('ef-stath-co-aisth')||{value:''}).value,
+    stath_co_ref:    (document.getElementById('ef-stath-co-ref')||{value:''}).value
   };
   const idx=equipment.findIndex(e=>e.fak===fak);
   if(idx>=0)equipment[idx]=obj;
@@ -682,3 +736,30 @@ function dlCSV(rows,fn){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=fn;a.click();
 }
 
+
+// ══ ΣΤΑΘΜΟΙ — Helper functions ══
+
+function stathToggleOrario(){
+  const kat=(document.getElementById('ef-stath-kat')||{value:''}).value;
+  const wrap=document.getElementById('ef-stath-orario-wrap');
+  if(wrap) wrap.style.display=kat==='Υπαίθριος'?'':'none';
+}
+
+// EV toggle
+function stathToggleEv(cb){
+  const wrap=document.getElementById('ef-stath-ev-wrap');
+  if(wrap) wrap.style.display=cb.checked?'flex':'none';
+}
+
+// CO check: υποχρεωτικό όταν Μέσος/Μεγάλος + υπόγεια > 0 + ΌΧΙ μηχανικά μέσα
+function stathCheckCO(){
+  const megethos=(document.getElementById('ef-stath-megethos')||{value:''}).value;
+  const ypogeia =parseInt((document.getElementById('ef-stath-ypogeia')||{value:'0'}).value)||0;
+  const kinisi  =(document.getElementById('ef-stath-kinisi')||{value:''}).value;
+  const coWrap  =document.getElementById('ef-stath-co-wrap');
+  if(!coWrap) return;
+  const needsCO = (megethos==='mesos'||megethos==='megalos')
+                && ypogeia>0
+                && kinisi!=='Μηχανικά μέσα';
+  coWrap.style.display=needsCO?'block':'none';
+}

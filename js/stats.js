@@ -29,7 +29,7 @@ function renderDash(){
 
   // ── Ανά τύπο εγκατάστασης ──
   const FUEL=['Πρατήριο Υγρών Καυσίμων','Μικτό Πρατήριο','Πρατήριο ΙΧ Container'];
-  const STATHMOI=['Στεγασμένος Σταθμός','Υπαίθριος Σταθμός'];
+  const STATHMOI=['Στεγασμένος Σταθμός','Υπαίθριος Σταθμός','Σταθμός Βαρέων Οχημάτων','Parking Σκαφών'];
   const pratires=installations.filter(i=>FUEL.includes(i.type)).length;
   const synergia=installations.filter(i=>i.type==='Συνεργείο').length;
   const plynteria=installations.filter(i=>i.type==='Πλυντήριο'||i.type==='Λιπαντήριο').length;
