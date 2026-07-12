@@ -97,9 +97,15 @@ function openInstModal(fak=null){
   const f=id=>document.getElementById(id);
   f('if-fak').value=i?i.fak:'';
   f('if-fak').disabled=!!fak;
-  // Κουμπί αλλαγής ΦΑΚ — εμφανίζεται μόνο σε επεξεργασία υπάρχουσας
+  f('if-fak').style.border='';
+  f('if-fak').title='';
+  // Κουμπί αλλαγής ΦΑΚ — reset state + εμφάνιση μόνο σε επεξεργασία υπάρχουσας
   const unlockBtn=document.getElementById('if-fak-unlock-btn');
-  if(unlockBtn) unlockBtn.style.display=fak?'':'none';
+  if(unlockBtn){
+    unlockBtn.style.display=fak?'':'none';
+    unlockBtn.textContent='✏️ Αλλαγή ΦΑΚ';
+    unlockBtn.disabled=false;
+  }
   f('if-sheet').value=i?i.sheet:'';
   f('if-name').value=i?i.name:'';
   f('if-afm').value=i?i.afm:'';
