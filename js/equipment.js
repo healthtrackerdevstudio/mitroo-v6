@@ -281,12 +281,32 @@ function openEquipModal(fak=null){
   if(ftSel) ftSel.value=eq.fortistes_theseis||'';
   const fiSel=document.getElementById('ef-fortistes-ischys');
   if(fiSel) fiSel.value=eq.fortistes_ischys||'';
-  f('ef-lipantirio').checked=!!eq.lipantirio;
-  f('ef-anif-plyntirio').checked=!!eq.anif_plyntirio;
-  f('ef-anif-lipantirio').checked=!!eq.anif_lipantirio;
-  toggleAnifotiko('plyntirio');toggleAnifotiko('lipantirio');
+  // Πλυντήρια dynamic list
+  const plyntList=document.getElementById('ef-plyntir-list');
+  if(plyntList){
+    plyntList.innerHTML='';
+    const plyntData=eq.plynteria||[];
+    // Backward compat: παλιό single checkbox
+    if(!plyntData.length && eq.plyntirio){
+      plyntData.push({anif:!!eq.anif_plyntirio,pros:!!eq.plyntirio_pros,auto:!!eq.plyntirio_auto});
+    }
+    plyntData.forEach(function(p){ addPlyntirRow(p); });
+  }
+  // Λιπαντήρια dynamic list
+  const lipadList=document.getElementById('ef-lipadir-list');
+  if(lipadList){
+    lipadList.innerHTML='';
+    const lipadData=eq.lipaderia||[];
+    if(!lipadData.length && eq.lipantirio){
+      lipadData.push({anif:!!eq.anif_lipantirio});
+    }
+    lipadData.forEach(function(p){ addLipadirRow(p); });
+  }
   f('ef-a25').checked=!!eq.artho25;
   if(f('ef-stage2')) f('ef-stage2').checked=!!eq.stage2;
+  if(f('ef-stage2-dx')) f('ef-stage2-dx').value=eq.stage2_dx||'';
+  const s2wrap=document.getElementById('ef-stage2-dx-wrap');
+  if(s2wrap) s2wrap.style.display=eq.stage2?'flex':'none';
   f('ef-a27').checked=!!eq.artho27;
   if(f('ef-pezodromiko')) f('ef-pezodromiko').checked=!!eq.pezodromiko;
   f('ef-plyntirio-pros').checked=!!eq.plyntirio_pros;
@@ -479,11 +499,14 @@ function saveEquip(){
     fortistes_theseis:f('ef-fortistes-theseis').value,
     fortistes_ischys:f('ef-fortistes-ischys')?f('ef-fortistes-ischys').value:'',
     tanks,extra_equip,
-    plyntirio:f('ef-plyntirio').checked,anif_plyntirio:f('ef-anif-plyntirio').checked,
-    plyntirio_pros:f('ef-plyntirio-pros').checked,
-    plyntirio_auto:f('ef-plyntirio-auto').checked,
-    lipantirio:f('ef-lipantirio').checked,anif_lipantirio:f('ef-anif-lipantirio').checked,
-    artho25:f('ef-a25').checked,stage2:f('ef-stage2')?f('ef-stage2').checked:false,artho27:f('ef-a27').checked,pezodromiko:f('ef-pezodromiko')?f('ef-pezodromiko').checked:false,
+    plynteria:collectPlynteria(),
+    lipaderia:collectLipaderia(),
+    plyntirio:collectPlynteria().length>0,
+    lipantirio:collectLipaderia().length>0,
+    artho25:f('ef-a25').checked,
+    stage2:f('ef-stage2')?f('ef-stage2').checked:false,
+    stage2_dx:f('ef-stage2-dx')?f('ef-stage2-dx').value.trim():'',
+    artho27:f('ef-a27').checked,pezodromiko:f('ef-pezodromiko')?f('ef-pezodromiko').checked:false,
     steg_freatia:f('ef-steg-freatia').checked,
     offset_filling:f('ef-offset-filling').checked,
     auto_politis:f('ef-auto-politis').checked,
@@ -738,7 +761,6 @@ function dlCSV(rows,fn){
 
 
 // ══ ΣΤΑΘΜΟΙ — Helper functions ══
-
 function stathToggleOrario(){
   const kat=(document.getElementById('ef-stath-kat')||{value:''}).value;
   const wrap=document.getElementById('ef-stath-orario-wrap');
@@ -762,4 +784,73 @@ function stathCheckCO(){
                 && ypogeia>0
                 && kinisi!=='Μηχανικά μέσα';
   coWrap.style.display=needsCO?'block':'none';
+}
+
+// ══ ΠΛΥΝΤΗΡΙΑ / ΛΙΠΑΝΤΗΡΙΑ — Dynamic rows ══
+
+function addPlyntirRow(data={}){
+  const cont=document.getElementById('ef-plyntir-list');
+  if(!cont) return;
+  const d=document.createElement('div');
+  d.className='plyntir-row';
+  d.style.cssText='background:#f8f9fa;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:4px';
+  d.innerHTML=
+    `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">` +
+    `<span style="font-size:11px;font-weight:600;color:var(--text3)">Πλυντήριο ${cont.children.length+1}</span>` +
+    `<button type="button" class="btn-icon" onclick="this.closest('.plyntir-row').remove();renumberRows('ef-plyntir-list','Πλυντήριο')" title="Αφαίρεση">✕</button>` +
+    `</div>` +
+    `<div style="display:flex;gap:6px;flex-wrap:wrap">` +
+    `<label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="ply-anif" ${data.anif?'checked':''}> Ανυψωτικό</label>` +
+    `<label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="ply-pros" ${data.pros?'checked':''}> Προσαρμοσμένο</label>` +
+    `<label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="ply-auto" ${data.auto?'checked':''}> Αυτόματο</label>` +
+    `</div>`;
+  cont.appendChild(d);
+}
+
+function addLipadirRow(data={}){
+  const cont=document.getElementById('ef-lipadir-list');
+  if(!cont) return;
+  const d=document.createElement('div');
+  d.className='lipadir-row';
+  d.style.cssText='background:#f8f9fa;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:4px';
+  d.innerHTML=
+    `<div style="display:flex;gap:6px;align-items:center">` +
+    `<span style="font-size:11px;font-weight:600;color:var(--text3)">Λιπαντήριο ${cont.children.length+1}</span>` +
+    `<button type="button" class="btn-icon" onclick="this.closest('.lipadir-row').remove();renumberRows('ef-lipadir-list','Λιπαντήριο')" title="Αφαίρεση">✕</button>` +
+    `</div>` +
+    `<label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="lip-anif" ${data.anif?'checked':''}> Ανυψωτικό</label>`;
+  cont.appendChild(d);
+}
+
+function collectPlynteria(){
+  return [...document.querySelectorAll('.plyntir-row')].map(function(r){
+    return {
+      anif:!!(r.querySelector('.ply-anif')&&r.querySelector('.ply-anif').checked),
+      pros:!!(r.querySelector('.ply-pros')&&r.querySelector('.ply-pros').checked),
+      auto:!!(r.querySelector('.ply-auto')&&r.querySelector('.ply-auto').checked)
+    };
+  });
+}
+
+function collectLipaderia(){
+  return [...document.querySelectorAll('.lipadir-row')].map(function(r){
+    return {
+      anif:!!(r.querySelector('.lip-anif')&&r.querySelector('.lip-anif').checked)
+    };
+  });
+}
+
+function renumberRows(containerId, label){
+  const cont=document.getElementById(containerId);
+  if(!cont) return;
+  [...cont.children].forEach(function(r,i){
+    const span=r.querySelector('span');
+    if(span) span.textContent=label+' '+(i+1);
+  });
+}
+
+// Stage II: toggle επιστροφή δεξαμενής
+function toggleStage2DX(cb){
+  const wrap=document.getElementById('ef-stage2-dx-wrap');
+  if(wrap) wrap.style.display=cb.checked?'flex':'none';
 }
