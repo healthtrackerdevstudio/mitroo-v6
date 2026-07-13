@@ -7,7 +7,7 @@
   Τεχνικό Τμήμα Μεταφορών - Περιφερειακή Ενότητα Ανατολικής Αττικής
   Περιφέρεια Αττικής - Υπουργείο Ψηφιακής Διακυβέρνησης
 
-  Έκδοση: v7.0 (split από v5.30)
+  Έκδοση: v7.1 (split από v5.30)
   Ημερομηνία: Ιούνιος 2026
   Επικοινωνία: ilias.papadakis@office365.attica.gov.gr
 =======================================================================
@@ -16,7 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Μητρώο Εγκαταστάσεων v7.0</title>
+<title>Μητρώο Εγκαταστάσεων v7.1</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@
     </div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <button class="btn btn-primary btn-full login-btn" onclick="doLogin()">Είσοδος</button>
-    <p class="login-footer">© 2026 Η.Π. — v7.0</p>
+    <p class="login-footer">© 2026 Η.Π. — v7.1</p>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
 <div id="app" style="display:none;flex-direction:column;width:100%;height:100vh;overflow:hidden">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v7.0</span></div>
+    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v7.1</span></div>
     <div class="topbar-spacer"></div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="topbar-btn" id="btn-backup-all" onclick="backupData()" title="Backup όλων των δεδομένων">💾 Backup</button>
@@ -1488,17 +1488,30 @@
           <div class="form-section-title">Πρόσθετος Εξοπλισμός</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:4px 16px">
             <div>
-              <div class="checkbox-row"><input type="checkbox" id="ef-plyntirio" onchange="toggleAnifotiko('plyntirio')"><label for="ef-plyntirio">Πλυντήριο</label></div>
-              <div id="row-anif-plyntirio" style="display:none;margin-left:22px;margin-top:2px" class="checkbox-row"><input type="checkbox" id="ef-anif-plyntirio"><label for="ef-anif-plyntirio">Ανυψωτικό</label></div>
-              <div style="margin-left:22px;margin-top:2px" class="checkbox-row"><input type="checkbox" id="ef-plyntirio-pros"><label for="ef-plyntirio-pros">Προσαρμοσμένο</label></div>
-              <div style="margin-left:22px;margin-top:2px" class="checkbox-row"><input type="checkbox" id="ef-plyntirio-auto"><label for="ef-plyntirio-auto">Αυτόματο</label></div>
+              <!-- Πλυντήρια: dynamic list -->
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">Πλυντήρια</div>
+              <div id="ef-plyntir-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px"></div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="addPlyntirRow()" style="font-size:11px">+ Πλυντήριο</button>
             </div>
             <div>
-              <div class="checkbox-row"><input type="checkbox" id="ef-lipantirio" onchange="toggleAnifotiko('lipantirio')"><label for="ef-lipantirio">Λιπαντήριο</label></div>
-              <div id="row-anif-lipantirio" style="display:none;margin-left:22px;margin-top:2px" class="checkbox-row"><input type="checkbox" id="ef-anif-lipantirio"><label for="ef-anif-lipantirio">Ανυψωτικό</label></div>
+              <!-- Λιπαντήρια: dynamic list -->
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">Λιπαντήρια</div>
+              <div id="ef-lipadir-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px"></div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="addLipadirRow()" style="font-size:11px">+ Λιπαντήριο</button>
             </div>
             <div class="checkbox-row"><input type="checkbox" id="ef-a25"><label for="ef-a25">Άρθρο 25</label></div>
-            <div class="checkbox-row"><input type="checkbox" id="ef-stage2"><label for="ef-stage2">Stage II</label></div>
+            <div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="ef-stage2" onchange="toggleStage2DX(this)">
+                <label for="ef-stage2">Stage II</label>
+              </div>
+              <div id="ef-stage2-dx-wrap" style="display:none;margin-top:4px;display:none">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:11px;color:var(--text3);white-space:nowrap">με επιστροφή στη ΔΞ</span>
+                  <input class="form-control" id="ef-stage2-dx" placeholder="Αρ. δεξαμενής" style="width:120px;font-size:12px" title="Αριθμός δεξαμενής επιστροφής">
+                </div>
+              </div>
+            </div>
             <div class="checkbox-row"><input type="checkbox" id="ef-a27"><label for="ef-a27">Άρθρο 27</label></div>
             <div class="checkbox-row"><input type="checkbox" id="ef-pezodromiko"><label for="ef-pezodromiko">Πεζοδρομιακό</label></div>
             <div class="checkbox-row"><input type="checkbox" id="ef-steg-freatia"><label for="ef-steg-freatia">Στεγανά Φρεάτια</label></div>
