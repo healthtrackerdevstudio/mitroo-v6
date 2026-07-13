@@ -309,7 +309,6 @@ function openEquipModal(fak=null){
   if(s2wrap) s2wrap.style.display=eq.stage2?'flex':'none';
   f('ef-a27').checked=!!eq.artho27;
   if(f('ef-pezodromiko')) f('ef-pezodromiko').checked=!!eq.pezodromiko;
-  f('ef-plyntirio-pros').checked=!!eq.plyntirio_pros;
   f('ef-steg-freatia').checked=!!eq.steg_freatia;
   f('ef-offset-filling').checked=!!eq.offset_filling;
   f('ef-auto-politis').checked=!!eq.auto_politis;
