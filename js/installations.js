@@ -33,6 +33,7 @@ function renderInst(){
     return `<tr class="${rowCls3}" onclick="openInstModal('${esc(i.fak)}')" title="Κλικ για επεξεργασία">
     <td class="mono">${esc(i.fak)}${lockBadge}${adeiaBadge}</td>
     <td><strong>${esc(i.name)}</strong>${takBadge}</td>
+    <td style="font-size:12px">${esc(i.address||'')}</td>
     <td>${esc(i.topothesia)}</td>
     <td class="mono muted">${esc(i.afm)}</td>
     <td>${typeTag(i.type,i.subtype)}</td>
