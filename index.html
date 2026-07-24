@@ -7,7 +7,7 @@
   Τεχνικό Τμήμα Μεταφορών - Περιφερειακή Ενότητα Ανατολικής Αττικής
   Περιφέρεια Αττικής - Υπουργείο Ψηφιακής Διακυβέρνησης
 
-  Έκδοση: v7.1 (split από v5.30)
+  Έκδοση: v7.3 (split από v5.30)
   Ημερομηνία: Ιούνιος 2026
   Επικοινωνία: ilias.papadakis@office365.attica.gov.gr
 =======================================================================
@@ -16,7 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Μητρώο Εγκαταστάσεων v7.1</title>
+<title>Μητρώο Εγκαταστάσεων v7.3</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +79,7 @@
     </div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <button class="btn btn-primary btn-full login-btn" onclick="doLogin()">Είσοδος</button>
-    <p class="login-footer">© 2026 Η.Π. — v7.1</p>
+    <p class="login-footer">© 2026 Η.Π. — v7.3</p>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
 <div id="app" style="display:none;flex-direction:column;width:100%;height:100vh;overflow:hidden">
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v7.1</span></div>
+    <div class="topbar-brand">Μητρώο Εγκαταστάσεων<span class="topbar-ver">v7.3</span></div>
     <div class="topbar-spacer"></div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="topbar-btn" id="btn-backup-all" onclick="backupData()" title="Backup όλων των δεδομένων">💾 Backup</button>
@@ -319,6 +319,7 @@
           <thead><tr>
             <th class="sortable" onclick="sortTbl('inst','fak')">ΦΑΚ <span class="sort-arrow" id="sa-inst-fak">↕</span></th>
             <th class="sortable" onclick="sortTbl('inst','name')">Επωνυμία <span class="sort-arrow" id="sa-inst-name">↕</span></th>
+            <th class="sortable" onclick="sortTbl('inst','address')">Διεύθυνση <span class="sort-arrow" id="sa-inst-address">↕</span></th>
             <th class="sortable" onclick="sortTbl('inst','topothesia')">Περιοχή <span class="sort-arrow" id="sa-inst-topothesia">↕</span></th>
             <th>ΑΦΜ</th>
             <th>Τύπος</th>
@@ -1264,106 +1265,128 @@
       <span class="modal-title" id="modal-proto-title">Νέα Κίνηση Πρωτοκόλλου</span>
       <button class="modal-close" onclick="closeModal('modal-proto')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group ff ac-wrap">
-          <label>ΦΑΚ <span class="req">*</span></label>
-          <input class="form-control" id="pf-fak" placeholder="π.χ. GPL 35_10" oninput="acFak(this);checkFakAlertsDelayed(this.value)" onfocus="acFak(this)" autocomplete="off">
-          <div class="ac-list" id="ac-fak"></div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- ══ ΕΙΣΕΡΧΟΜΕΝΑ ══ -->
+      <div style="padding:16px;background:var(--surface)">
+        <div style="font-size:10px;font-weight:700;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          <span style="flex:1;height:1px;background:var(--border)"></span>
+          📥 Εισερχόμενα
+          <span style="flex:1;height:1px;background:var(--border)"></span>
         </div>
-        <div class="form-group">
-          <label>Είδος</label>
-          <select class="form-control" id="pf-sheet" onchange="if(this.value==='Αυτοκίνητα'){const a=document.getElementById('proto-fak-alerts');if(a)a.remove();}else{const fak=document.getElementById('pf-fak').value.trim();if(fak)checkFakAlerts(fak);}">
-            <option value="">—</option>
-            <option>Εγκαταστάσεις</option>
-            <option>Αυτοκίνητα</option>
-          </select>
-        </div>
-        <div class="form-group ac-wrap">
-          <label>Αιτών</label>
-          <input class="form-control" id="pf-aition" placeholder="Επωνυμία αιτούντος" oninput="acAition(this)" onfocus="acAition(this)" autocomplete="off">
-          <div class="ac-list" id="ac-aition"></div>
-        </div>
-        <div class="form-group ac-wrap">
-          <label>Αίτημα</label>
-          <input class="form-control" id="pf-aitima" placeholder="Τύπος αιτήματος" oninput="acList(this,'pf-aitima','ac-aitima',aitimata_list)" onfocus="acList(this,'pf-aitima','ac-aitima',aitimata_list)" autocomplete="off">
-          <div class="ac-list" id="ac-aitima"></div>
-        </div>
-        <div class="form-group">
-          <label>Αρ. Πρωτ. Εισερχόμενου</label>
-          <input class="form-control" id="pf-proto_eisx" placeholder="π.χ. 12345/2024">
-        </div>
-        <div class="form-group">
-          <label>Ημ. Χρέωσης</label>
-          <input class="form-control" type="date" id="pf-hm_xreosis">
-        </div>
-        <div class="form-group ac-wrap">
-          <label>Μηχανικός</label>
-          <input class="form-control" id="pf-mixanikos" placeholder="Επώνυμο" oninput="acList(this,'pf-mixanikos','ac-eng',engineers_dynamic)" onfocus="acList(this,'pf-mixanikos','ac-eng',engineers_dynamic)" autocomplete="off">
-          <div class="ac-list" id="ac-eng"></div>
-        </div>
-        <div class="form-group">
-          <label>Ημ. Εξερχόμενου</label>
-          <input class="form-control" type="date" id="pf-hm_exerx">
-        </div>
-        <div class="form-group ff" style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:10px">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:600;color:#92400e">🔔 Υπενθύμιση (προαιρετικό)</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
-            <select class="form-control" id="pf-reminder-mode" style="max-width:170px" onchange="protoReminderModeChange()">
-              <option value="">Χωρίς υπενθύμιση</option>
-              <option value="days">Χ ημέρες μετά τη χρέωση</option>
-              <option value="date">Συγκεκριμένη ημ/νία &amp; ώρα</option>
+        <div class="form-grid">
+          <div class="form-group ff ac-wrap">
+            <label>ΦΑΚ <span class="req">*</span></label>
+            <input class="form-control" id="pf-fak" placeholder="π.χ. GPL 35_10" oninput="acFak(this);checkFakAlertsDelayed(this.value)" onfocus="acFak(this)" autocomplete="off">
+            <div class="ac-list" id="ac-fak"></div>
+          </div>
+          <div class="form-group">
+            <label>Είδος</label>
+            <select class="form-control" id="pf-sheet" onchange="if(this.value==='Αυτοκίνητα'){const a=document.getElementById('proto-fak-alerts');if(a)a.remove();}else{const fak=document.getElementById('pf-fak').value.trim();if(fak)checkFakAlerts(fak);}">
+              <option value="">—</option>
+              <option>Εγκαταστάσεις</option>
+              <option>Αυτοκίνητα</option>
             </select>
-            <input class="form-control" type="number" id="pf-reminder-days" placeholder="πχ. 15" min="1" style="max-width:90px;display:none">
-            <input class="form-control" type="datetime-local" id="pf-reminder-datetime" style="max-width:220px;display:none">
           </div>
-          <input class="form-control" id="pf-reminder-note" placeholder="Σημείωση υπενθύμισης (προαιρετικό)" style="margin-top:6px;display:none" >
-        </div>
-        <div class="form-group ff ac-wrap">
-          <label>Τελική Εξ. Ενέργεια</label>
-          <input class="form-control" id="pf-energeia" placeholder="Τύπος ενέργειας" oninput="acList(this,'pf-energeia','ac-energeia',aitimata_list)" onfocus="acList(this,'pf-energeia','ac-energeia',aitimata_list)" autocomplete="off">
-          <div class="ac-list" id="ac-energeia"></div>
-        </div>
-        <div class="form-group">
-          <label>Αρ. Πρωτ. Εξερχόμενου</label>
-          <input class="form-control" id="pf-proto_exerx" placeholder="π.χ. 12345/2024">
-        </div>
-        <div class="form-group">
-          <label>Τελικό / Υπογραφή</label>
-          <input class="form-control" type="date" id="pf-teliko">
-        </div>
-        <div class="form-group ff">
-          <label>Link εγγράφου (OneDrive PDF)</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input class="form-control" id="pf-proto_exerx_link" placeholder="Διαδρομή ή URL αρχείου" style="flex:1">
-            <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap" title="Επιλογή αρχείου">📂 Αρχείο<input type="file" style="display:none" onchange="setFileLink(this,'pf-proto_exerx_link')"></label>
-            <button type="button" class="btn btn-secondary btn-sm" style="white-space:nowrap" title="Αντιγραφή διαδρομής στο clipboard (Ctrl+L στον Explorer)"
-              onclick="(function(){const v=document.getElementById('pf-proto_exerx_link').value.trim().replace(/\//g,'\\\\');if(!v){toast('Δεν υπάρχει διαδρομή','info');return;}navigator.clipboard.writeText(v).then(()=>toast('📋 Διαδρομή αντιγράφηκε!','success')).catch(()=>{const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('📋 Διαδρομή αντιγράφηκε!','success');});})()">📋</button>
+          <div class="form-group ac-wrap">
+            <label>Αιτών</label>
+            <input class="form-control" id="pf-aition" placeholder="Επωνυμία αιτούντος" oninput="acAition(this)" onfocus="acAition(this)" autocomplete="off">
+            <div class="ac-list" id="ac-aition"></div>
+          </div>
+          <div class="form-group ac-wrap">
+            <label>Αίτημα</label>
+            <input class="form-control" id="pf-aitima" placeholder="Τύπος αιτήματος" oninput="acList(this,'pf-aitima','ac-aitima',aitimata_list)" onfocus="acList(this,'pf-aitima','ac-aitima',aitimata_list)" autocomplete="off">
+            <div class="ac-list" id="ac-aitima"></div>
+          </div>
+          <div class="form-group">
+            <label>Αρ. Πρωτ. Εισερχόμενου</label>
+            <input class="form-control" id="pf-proto_eisx" placeholder="π.χ. 12345/2024">
+          </div>
+          <div class="form-group">
+            <label>Ημ. Χρέωσης</label>
+            <input class="form-control" type="date" id="pf-hm_xreosis">
+          </div>
+          <div class="form-group ac-wrap">
+            <label>Μηχανικός</label>
+            <input class="form-control" id="pf-mixanikos" placeholder="Επώνυμο" oninput="acList(this,'pf-mixanikos','ac-eng',engineers_dynamic)" onfocus="acList(this,'pf-mixanikos','ac-eng',engineers_dynamic)" autocomplete="off">
+            <div class="ac-list" id="ac-eng"></div>
+          </div>
+          <!-- Υπενθύμιση — στο τμήμα εισερχομένων -->
+          <div class="form-group ff" style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:10px">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:600;color:#92400e">🔔 Υπενθύμιση (προαιρετικό)</label>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
+              <select class="form-control" id="pf-reminder-mode" style="max-width:170px" onchange="protoReminderModeChange()">
+                <option value="">Χωρίς υπενθύμιση</option>
+                <option value="days">Χ ημέρες μετά τη χρέωση</option>
+                <option value="date">Συγκεκριμένη ημ/νία &amp; ώρα</option>
+              </select>
+              <input class="form-control" type="number" id="pf-reminder-days" placeholder="πχ. 15" min="1" style="max-width:90px;display:none">
+              <input class="form-control" type="datetime-local" id="pf-reminder-datetime" style="max-width:220px;display:none">
+            </div>
+            <input class="form-control" id="pf-reminder-note" placeholder="Σημείωση υπενθύμισης (προαιρετικό)" style="margin-top:6px;display:none">
           </div>
         </div>
-        <div class="form-group ff">
-          <label>Παρατηρήσεις</label>
-          <textarea class="form-control" id="pf-notes"></textarea>
+      </div>
+
+      <!-- ══ ΕΞΕΡΧΟΜΕΝΑ ══ -->
+      <div style="padding:16px;background:#f8fafc;border-top:2px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          <span style="flex:1;height:1px;background:#e2e8f0"></span>
+          📤 Εξερχόμενα / Ενέργεια
+          <span style="flex:1;height:1px;background:#e2e8f0"></span>
         </div>
-        <div class="form-group ff" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:10px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#dc2626">
-            <input type="checkbox" id="pf-rejected" onchange="toggleRejectedDate(this)" style="width:16px;height:16px;cursor:pointer">
-            ❌ Απορρίφθηκε
-          </label>
-          <div id="pf-rejected-date-wrap" style="display:none;margin-top:8px">
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <div>
-                <label style="font-size:12px;color:var(--text3)">Ημερομηνία Απόρριψης</label>
-                <input class="form-control" type="date" id="pf-rejected-date" style="max-width:180px;margin-top:4px">
-              </div>
-              <div style="flex:1;min-width:180px">
-                <label style="font-size:12px;color:var(--text3)">Αιτιολογία Απόρριψης</label>
-                <input class="form-control" id="pf-rejected-reason" placeholder="Σύντομη αιτιολογία…" style="margin-top:4px">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Ημ. Εξερχόμενου</label>
+            <input class="form-control" type="date" id="pf-hm_exerx">
+          </div>
+          <div class="form-group ac-wrap">
+            <label>Τελική Εξ. Ενέργεια</label>
+            <input class="form-control" id="pf-energeia" placeholder="Τύπος ενέργειας" oninput="acList(this,'pf-energeia','ac-energeia',aitimata_list)" onfocus="acList(this,'pf-energeia','ac-energeia',aitimata_list)" autocomplete="off">
+            <div class="ac-list" id="ac-energeia"></div>
+          </div>
+          <div class="form-group">
+            <label>Αρ. Πρωτ. Εξερχόμενου</label>
+            <input class="form-control" id="pf-proto_exerx" placeholder="π.χ. 12345/2024">
+          </div>
+          <div class="form-group">
+            <label>Τελικό / Υπογραφή</label>
+            <input class="form-control" type="date" id="pf-teliko">
+          </div>
+          <div class="form-group ff">
+            <label>Link εγγράφου (OneDrive PDF)</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="form-control" id="pf-proto_exerx_link" placeholder="Διαδρομή ή URL αρχείου" style="flex:1">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap" title="Επιλογή αρχείου">📂 Αρχείο<input type="file" style="display:none" onchange="setFileLink(this,'pf-proto_exerx_link')"></label>
+              <button type="button" class="btn btn-secondary btn-sm" style="white-space:nowrap" title="Αντιγραφή διαδρομής"
+                onclick="(function(){const v=document.getElementById('pf-proto_exerx_link').value.trim().replace(/\//g,'\\\\');if(!v){toast('Δεν υπάρχει διαδρομή','info');return;}navigator.clipboard.writeText(v).then(()=>toast('📋 Αντιγράφηκε!','success')).catch(()=>{const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('📋 Αντιγράφηκε!','success');});})()">📋</button>
+            </div>
+          </div>
+          <div class="form-group ff">
+            <label>Παρατηρήσεις</label>
+            <textarea class="form-control" id="pf-notes"></textarea>
+          </div>
+          <div class="form-group ff" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:10px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#dc2626">
+              <input type="checkbox" id="pf-rejected" onchange="toggleRejectedDate(this)" style="width:16px;height:16px;cursor:pointer">
+              ❌ Απορρίφθηκε
+            </label>
+            <div id="pf-rejected-date-wrap" style="display:none;margin-top:8px">
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <div>
+                  <label style="font-size:12px;color:var(--text3)">Ημερομηνία Απόρριψης</label>
+                  <input class="form-control" type="date" id="pf-rejected-date" style="max-width:180px;margin-top:4px">
+                </div>
+                <div style="flex:1;min-width:180px">
+                  <label style="font-size:12px;color:var(--text3)">Αιτιολογία Απόρριψης</label>
+                  <input class="form-control" id="pf-rejected-reason" placeholder="Σύντομη αιτιολογία…" style="margin-top:4px">
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
     </div>
     <div class="modal-footer">
       <div class="modal-footer-left" style="display:flex;gap:6px">
