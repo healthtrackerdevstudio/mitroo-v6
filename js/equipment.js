@@ -22,38 +22,50 @@ function addPumpRow(type='',eidos='',products='',epistomia=''){
 function addTankRow(fuel='',liters='',mitroo='',ogkom='',abolished=false,abolishedRef=''){
   const row=document.createElement('div');
   row.className='tank-row';
-  row.style.cssText=`display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:${abolished?'#f8fafc':'#f8f9fa'};padding:8px;border-radius:6px;border:1px solid #e2e8f0;${abolished?'opacity:0.65':''}`;
+  row.style.cssText=`display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:${abolished?'#fef2f2':'#f8f9fa'};padding:8px;border-radius:6px;border:1px solid ${abolished?'#fecaca':'#e2e8f0'};${abolished?'opacity:0.7':''}`;
   row.innerHTML=
-    `<input class="form-control tank-mitroo" placeholder="Αρ.Μητρώου" style="flex:2;min-width:160px${abolished?';text-decoration:line-through;color:var(--text3)':''}" value="${mitroo||''}" title="Μορφή: 12345678-Τ-39-12345">` +
-    `<select class="form-control tank-fuel" style="flex:1;min-width:110px" onchange="checkCustomFuel(this);updateTankSummary()">` +
+    // Αρ.Μητρώου: 19 χαρακτήρες → ~200px (font-size 13px * ~10.5px/char)
+    `<input class="form-control tank-mitroo" placeholder="Αρ.Μητρώου (19 χαρ.)" style="width:200px;flex:none;font-family:monospace;font-size:12px${abolished?';text-decoration:line-through;color:var(--text3)':''}" value="${mitroo||''}" title="Μορφή: 12345678-Τ-39-12345" maxlength="22">` +
+    // Καύσιμο: πιο compact
+    `<select class="form-control tank-fuel" style="width:130px;flex:none" onchange="checkCustomFuel(this);updateTankSummary()">` +
     `<option value="">— Καύσιμο —</option>` +
     FUEL_TYPES.map(f=>`<option${f===fuel?' selected':''}>${f}</option>`).join('') +
     `<option value="__custom__"${!FUEL_TYPES.includes(fuel)&&fuel?' selected':''}>Άλλο…</option>` +
     `</select>` +
     `<input class="form-control tank-fuel-custom" placeholder="Νέο καύσιμο" style="width:100px;display:${!FUEL_TYPES.includes(fuel)&&fuel?'block':'none'}" value="${!FUEL_TYPES.includes(fuel)&&fuel?fuel:''}" oninput="updateTankSummary()">` +
-    `<input class="form-control tank-liters" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:90px" value="${liters||''}" oninput="updateTankSummary()">` +
-    `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:120px" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
-    // Κατάργηση — inline
-    `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:${abolished?'#dc2626':'var(--text3)'};white-space:nowrap" title="Κατηργήθηκε">` +
-    `<input type="checkbox" class="tank-abolished" ${abolished?'checked':''} onchange="tankAbolishedToggle(this)" style="cursor:pointer">` +
-    `<span>❌</span></label>` +
-    `<input class="form-control tank-abolished-ref" placeholder="Αρ. Απόφ. κατάργησης" style="width:160px;display:${abolished?'':'none'}" value="${abolishedRef||''}" title="Αριθμός Απόφασης Κατάργησης">` +
-    `<button type="button" class="btn-icon" onclick="this.closest('.tank-row').remove();updateTankSummary()" title="Αφαίρεση">✕</button>`;
+    // Λίτρα: πιο φαρδύ για μεγάλους αριθμούς
+    `<input class="form-control tank-liters" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:110px;flex:none" value="${liters||''}" oninput="updateTankSummary()">` +
+    // Ογκομετρητής
+    `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:110px;flex:none" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
+    // Κατάργηση — κουμπί με κόκκινο κείμενο αντί για ❌ checkbox
+    `<button type="button" class="tank-abolished-btn" onclick="tankAbolishedToggle(this)"
+      style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid ${abolished?'#dc2626':'#e2e8f0'};color:${abolished?'#dc2626':'#94a3b8'};background:${abolished?'#fef2f2':'#f8fafc'}"
+      title="Σήμανση ως κατηργημένης"
+      data-abolished="${abolished?'1':'0'}">${abolished?'ΚΑΤΗΡΓΗΜΕΝΗ':'κατάργηση'}</button>` +
+    `<input class="form-control tank-abolished-ref" placeholder="Αρ. Απόφ. κατάργησης" style="width:170px;display:${abolished?'':'none'}" value="${abolishedRef||''}" title="Αριθμός Απόφασης Κατάργησης">` +
+    `<button type="button" class="btn-icon" onclick="this.closest('.tank-row').remove();updateTankSummary()" title="Αφαίρεση γραμμής" style="color:#94a3b8;font-size:14px">✕</button>`;
   document.getElementById('ef-tanks-list').appendChild(row);
   updateTankSummary();
 }
 
-function tankAbolishedToggle(cb){
-  const row=cb.closest('.tank-row');
+function tankAbolishedToggle(btn){
+  const row=btn.closest('.tank-row');
   const refInp=row.querySelector('.tank-abolished-ref');
   const mitroo=row.querySelector('.tank-mitroo');
-  const abolished=cb.checked;
+  const abolished=btn.dataset.abolished!=='1';
+  btn.dataset.abolished=abolished?'1':'0';
+  // Button visual
+  btn.textContent=abolished?'ΚΑΤΗΡΓΗΜΕΝΗ':'κατάργηση';
+  btn.style.color=abolished?'#dc2626':'#94a3b8';
+  btn.style.border=abolished?'1px solid #dc2626':'1px solid #e2e8f0';
+  btn.style.background=abolished?'#fef2f2':'#f8fafc';
+  btn.style.fontWeight=abolished?'700':'400';
+  // Row visual
+  row.style.background=abolished?'#fef2f2':'#f8f9fa';
+  row.style.border=`1px solid ${abolished?'#fecaca':'#e2e8f0'}`;
+  row.style.opacity=abolished?'0.7':'1';
+  if(mitroo){ mitroo.style.textDecoration=abolished?'line-through':''; mitroo.style.color=abolished?'var(--text3)':''; }
   if(refInp) refInp.style.display=abolished?'':'none';
-  row.style.opacity=abolished?'0.6':'1';
-  row.style.background=abolished?'#f8fafc':'#f8f9fa';
-  if(mitroo) mitroo.style.textDecoration=abolished?'line-through':'';
-  if(mitroo) mitroo.style.color=abolished?'var(--text3)':'';
-  cb.closest('label').style.color=abolished?'#dc2626':'var(--text3)';
   updateTankSummary();
 }
 
@@ -66,8 +78,8 @@ function updateTankSummary(){
   const totals={};
   rows.forEach(function(row){
     // Εξαιρούμε κατηργημένες δεξαμενές από τον υπολογισμό
-    const abolishedCb=row.querySelector('.tank-abolished');
-    if(abolishedCb&&abolishedCb.checked) return;
+    const abolishedBtn=row.querySelector('.tank-abolished-btn');
+    if(abolishedBtn&&abolishedBtn.dataset.abolished==='1') return;
     const sel=row.querySelector('.tank-fuel');
     const custom=row.querySelector('.tank-fuel-custom');
     const fuel=sel&&sel.value==='__custom__'?(custom?custom.value.trim():''):(sel?sel.value:'');
@@ -471,14 +483,14 @@ function saveEquip(){
     const fuelCustom=row.querySelector('.tank-fuel-custom');
     const fuelVal=fuelSel&&fuelSel.value==='__custom__'?(fuelCustom?fuelCustom.value.trim():''):( fuelSel?fuelSel.value.trim():'');
     const ogkomEl=row.querySelector('.tank-ogkom');
-    const abolishedCb=row.querySelector('.tank-abolished');
+    const abolishedBtn=row.querySelector('.tank-abolished-btn');
     const abolishedRefEl=row.querySelector('.tank-abolished-ref');
     return {
       mitroo:row.querySelector('.tank-mitroo').value.trim(),
       fuel:fuelVal,
       liters:parseFloat((row.querySelector('.tank-liters').value||'').replace(',','.'))||0,
       ogkom:ogkomEl?ogkomEl.value.trim():'',
-      abolished:!!(abolishedCb&&abolishedCb.checked),
+      abolished:!!(abolishedBtn&&abolishedBtn.dataset.abolished==='1'),
       abolished_ref:abolishedRefEl?abolishedRefEl.value.trim():''
     };
   }).filter(t=>t.fuel||t.liters||t.mitroo);
