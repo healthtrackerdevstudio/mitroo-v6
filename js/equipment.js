@@ -239,16 +239,17 @@ function renderEquip(){
       ? `<div class="eq-pills">${extras.map(x=>`<span class="eq-pill">${esc(x)}</span>`).join('')}</div>`
       : '<span class="eq-empty">—</span>';
 
-    return `<tr class="clickable" onclick="openEquipModal('${esc(e.fak)}')" title="Κλικ για επεξεργασία">
-      <td class="mono"><strong>${esc(e.fak)}</strong> <button class="btn-icon" style="font-size:11px;padding:1px 4px;color:var(--primary);opacity:.7" onclick="event.stopPropagation();navToInst('${esc(e.fak)}')" title="Άνοιγμα εγκατάστασης">🏢</button></td>
+    const safeFak = esc(e.fak);
+    return `<tr class="clickable" onclick="openEquipModal('${safeFak}')" title="Κλικ για επεξεργασία">
+      <td class="mono"><strong>${safeFak}</strong> <button class="btn-icon" style="font-size:11px;padding:1px 4px;color:var(--primary);opacity:.7" onclick="event.stopPropagation();navToInst('${safeFak}')" title="Άνοιγμα εγκατάστασης">🏢</button></td>
       <td>${pumpsCell}</td>
       <td>${tanksCell}</td>
       <td style="text-align:center">${dianCell}</td>
       <td style="text-align:center">${heoCell}</td>
       <td>${extraCell}</td>
       <td class="actions" onclick="event.stopPropagation()" style="white-space:nowrap;text-align:right">
-        <button class="btn-icon" onclick="openEquipModal('${esc(e.fak)}')" title="Επεξεργασία">✏️</button>
-        <button class="btn-icon" onclick="confirmDelete('Διαγραφή εξοπλισμού «${esc(e.fak)}»;',()=>deleteEquip('${esc(e.fak)}'))" title="Διαγραφή">🗑</button>
+        <button class="btn-icon" onclick="openEquipModal('${safeFak}')" title="Επεξεργασία">✏️</button>
+        <button class="btn-icon" onclick="confirmDelete('Διαγραφή εξοπλισμού «${safeFak}»;', function(){ deleteEquip('${safeFak}'); })" title="Διαγραφή">🗑</button>
       </td>
     </tr>`;
   }).join('');
@@ -380,7 +381,7 @@ function openEquipModal(fak=null){
     stathToggleOrario();
     stathCheckCO();
   }
-  // Φόρτωση διαδρόμων ΙΚΤΕΟ
+  // Φόρτωση διαδρόμων ΙКТΕΟ
   if(showIkteo){
     const dList = document.getElementById('ef-diadromoi-list');
     if(dList){ dList.innerHTML=''; (eq.diadromoi||[]).forEach(d=>addDiadromos(d)); }
