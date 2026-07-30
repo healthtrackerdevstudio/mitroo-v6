@@ -36,7 +36,7 @@ function addTankRow(fuel='',liters='',mitroo='',ogkom='',abolished=false,abolish
     // Λίτρα: πιο φαρδύ για μεγάλους αριθμούς
     `<input class="form-control tank-liters" type="number" min="0" step="0.01" placeholder="Λίτρα" style="width:110px;flex:none" value="${liters||''}" oninput="updateTankSummary()">` +
     // Ογκομετρητής
-    `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:110px;flex:none" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
+    `<input class="form-control tank-ogkom" placeholder="Ογκομετρητής" style="width:160px;flex:none" value="${ogkom||''}" title="Αρ. Ογκομετρητή">` +
     // Κατάργηση — κουμπί με κόκκινο κείμενο αντί για ❌ checkbox
     `<button type="button" class="tank-abolished-btn" onclick="tankAbolishedToggle(this)"
       style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;cursor:pointer;white-space:nowrap;border:1px solid ${abolished?'#dc2626':'#e2e8f0'};color:${abolished?'#dc2626':'#94a3b8'};background:${abolished?'#fef2f2':'#f8fafc'}"
@@ -234,6 +234,7 @@ function renderEquip(){
     if(e.offset_filling) extras.push('Offset');
     if(e.auto_politis) extras.push('Αυτ.Πωλ.');
     if(e.lakkos) extras.push('Λάκκος');
+    if(e.eisroes) extras.push('Εισρ.-Εκρ.');
     (e.extra_equip||[]).forEach(x=>{ if(x) extras.push(x); });
     const extraCell=extras.length
       ? `<div class="eq-pills">${extras.map(x=>`<span class="eq-pill">${esc(x)}</span>`).join('')}</div>`
@@ -316,6 +317,7 @@ function openEquipModal(fak=null){
     lipadData.forEach(function(p){ addLipadirRow(p); });
   }
   f('ef-a25').checked=!!eq.artho25;
+  if(f('ef-eisroes')) f('ef-eisroes').checked=!!eq.eisroes;
   if(f('ef-stage2')) f('ef-stage2').checked=!!eq.stage2;
   if(f('ef-stage2-dx')) f('ef-stage2-dx').value=eq.stage2_dx||'';
   const s2wrap=document.getElementById('ef-stage2-dx-wrap');
@@ -516,6 +518,7 @@ function saveEquip(){
     plyntirio:collectPlynteria().length>0,
     lipantirio:collectLipaderia().length>0,
     artho25:f('ef-a25').checked,
+    eisroes:f('ef-eisroes')?f('ef-eisroes').checked:false,
     stage2:f('ef-stage2')?f('ef-stage2').checked:false,
     stage2_dx:f('ef-stage2-dx')?f('ef-stage2-dx').value.trim():'',
     artho27:f('ef-a27').checked,pezodromiko:f('ef-pezodromiko')?f('ef-pezodromiko').checked:false,

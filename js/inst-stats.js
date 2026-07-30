@@ -185,6 +185,7 @@ function printInstReport(fak){
   if(eq.offset_filling) equipList.push('Offset Filling');
   if(eq.auto_politis) equipList.push('Αυτόματος Πωλητής');
   if(eq.lakkos) equipList.push('Λάκκος Επιθεώρησης');
+  if(eq.eisroes) equipList.push('⚖️ Προσαρμογή Εισροών-Εκροών');
   // Πρόσθετος εξοπλισμός (free text)
   if(eq.extra_equip&&eq.extra_equip.length){
     eq.extra_equip.forEach(function(e){if(e) equipList.push(e);});
