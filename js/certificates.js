@@ -193,6 +193,7 @@ function buildCertTypeOptions(selectedVal=''){
   const customTypes=[...new Set(certificates.map(x=>x.type).filter(t=>t&&!CERT_TYPES.includes(t)))].sort();
   return '<option value="">— Τύπος —</option>'+
     CERT_TYPES.map(t=>`<option${t===selectedVal?' selected':''}>${t}</option>`).join('')+
+    (customTypes.length?'<option disabled>── Προσαρμοσμένοι ──</option>':'')+
     customTypes.map(t=>`<option${t===selectedVal?' selected':''}>${t}</option>`).join('')+
     `<option value="__other__"${selectedVal==='__other__'?' selected':''}>Νέα εγγραφή…</option>`;
 }
@@ -267,10 +268,9 @@ function openCertModal(id=null, pfFak=null){
   }catch(e){console.error('openCertModal error:',e);toast('Σφάλμα: '+e.message,'error');}
 }
 
-function saveCerts(){
+function saveCerts(andClose=true){
   const fak=document.getElementById('cf-fak').value;
   if(!fak){toast('Επιλέξτε ΦΑΚ','error');return;}
-  // Αποθήκευση Τελευταίας Αυτοψίας στην εγκατάσταση
   const autoEl=document.getElementById('cf-autopsia');
   if(autoEl&&autoEl.value){
     const instIdx=installations.findIndex(function(i){return i.fak===fak;});
@@ -297,16 +297,29 @@ function saveCerts(){
     if(existingId){
       const idx=certificates.findIndex(c=>c._id===existingId);
       if(idx>=0){certificates[idx]={...certificates[idx],...obj};saved++;}
-    } else {obj._id=uid();certificates.push(obj);saved++;}
+    } else {
+      // Έλεγχος για διπλότυπο (ίδιο fak + type + num)
+      const isDuplicate=certificates.some(c=>
+        c.fak===fak && c.type===type && c.num===obj.num && c.issue_date===obj.issue_date
+      );
+      if(!isDuplicate){obj._id=uid();certificates.push(obj);saved++;}
+      else{errors++;} // skip duplicate
+    }
   });
   save('certs',certificates);
-  document.getElementById('cf-fak').disabled=false;
   const toastMsg=errors>0
-    ?`⚠️ Αποθηκεύτηκαν ${saved} πιστοποιητικά (${errors} παραλείφθηκαν χωρίς τύπο)`
-    :`✓ Αποθηκεύτηκαν ${saved} πιστοποιητικά για ΦΑΚ ${fak}`;
-  const toastType=errors>0?'warning':'success';
-  closeModal('modal-cert');
-  toast(toastMsg, toastType);
+    ?`⚠️ Αποθηκεύτηκαν ${saved} (${errors} παραλείφθηκαν/διπλότυπα)`
+    :`✓ Αποθηκεύτηκαν ${saved} πιστοποιητικά`;
+  if(andClose){
+    document.getElementById('cf-fak').disabled=false;
+    closeModal('modal-cert');
+  } else {
+    // Μένει ανοιχτό — καθαρισμός νέων γραμμών, διατήρηση αποθηκευμένων
+    document.getElementById('cf-cert-rows').innerHTML='';
+    certificates.filter(c=>c.fak===fak).forEach(c=>addCertRow(c));
+    document.getElementById('cf-fak').disabled=true;
+  }
+  toast(toastMsg, errors>0?'warning':'success');
   try{ updateBadges(); renderCerts(); }catch(e){ console.warn('renderCerts:',e); }
 }
 

@@ -100,7 +100,15 @@ function loadData(){
         // renderInstStats με μικρό delay για να είναι έτοιμα τα filters
         setTimeout(function(){ populateInstStatsFilters(); renderInstStats(); }, 200);
       });
-      fbListen('certificates',  function(d){ certificates=d;  updateBadges(); renderCerts(); });
+      fbListen('certificates', function(d){
+        // Deduplication: αφαίρεση εγγραφών με ίδιο _id
+        const seen=new Set();
+        certificates=d.filter(c=>{
+          if(!c._id||seen.has(c._id)) return false;
+          seen.add(c._id); return true;
+        });
+        updateBadges(); renderCerts();
+      });
       fbListen('equipment',     function(d){ equipment=d;     renderEquip(); });
     });
     return;
