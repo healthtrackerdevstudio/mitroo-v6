@@ -49,8 +49,8 @@ function initMap(){
     return;
   }
   leafletMap=L.map('leaflet-map').setView([38.0,23.8],10);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     subdomains:'abcd', maxZoom:19
   }).addTo(leafletMap);
   // Legend
