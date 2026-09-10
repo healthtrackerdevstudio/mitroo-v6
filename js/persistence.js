@@ -89,8 +89,26 @@ function loadData(){
       installations = results[0] || [];
       certificates  = results[1] || [];
       equipment     = results[2] || [];
-      // Πρωτόκολλο: πάντα localStorage
-      protocol = JSON.parse(localStorage.getItem(KEYS.proto)||'null')||[];
+        // Φόρτωση πρωτοκόλλου από Firestore (user document)
+      const fbEmail=sessionStorage.getItem('fb_email')||'';
+      const protoKey=fbEmail?'protocol_'+fbEmail.toLowerCase().replace(/[@.]/g,'_'):'';
+      const protoLocal=JSON.parse(localStorage.getItem(KEYS.proto)||'null')||[];
+
+      const protoPromise=protoKey
+        ? db.collection('userData').doc(protoKey).get()
+            .then(function(snap){ return snap.exists?snap.data().items||[]:protoLocal; })
+            .catch(function(){ return protoLocal; })
+        : Promise.resolve(protoLocal);
+
+      protoPromise.then(function(protoFromFirestore){
+        // Κράτα αυτό με τις περισσότερες εγγραφές
+        protocol = protoFromFirestore.length >= protoLocal.length ? protoFromFirestore : protoLocal;
+        if(protoFromFirestore.length > protoLocal.length){
+          localStorage.setItem(KEYS.proto, JSON.stringify(protocol));
+        }
+        console.log('[proto] Loaded:',protocol.length,'(Firestore:',protoFromFirestore.length,'localStorage:',protoLocal.length,')');
+        _afterLoad();
+      });
       // nomosIndex: φορτώνεται από nomosInit() μετά το login
       _afterLoad();
       // Real-time listeners για κοινά
@@ -127,6 +145,7 @@ function _afterLoad(){
   aitimata_list=[...new Set([...(aitimata_list_defaults||[]),...protocol.map(p=>p.aitima).filter(Boolean),...protocol.map(p=>p.energeia).filter(Boolean)])].sort();
   engineers_dynamic=[...new Set([...engineers,...protocol.map(p=>p.mixanikos).filter(Boolean)])].sort();
   migrateInstTypes();
+  migrateCertTypes();
   updateBadges(); renderDash(); renderInst(); renderProto(); renderCerts(); renderEquip(); populateYearFilter(); renderInstStats();
 }
 
