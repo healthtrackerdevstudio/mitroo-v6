@@ -30,7 +30,7 @@ function renderInst(){
     const takBadge=i.taktopoi?`<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:6px" title="Τακτοποίηση${i.taktopoi_num?' αρ.'+i.taktopoi_num:''}${i.taktopoi_nomos?' — '+i.taktopoi_nomos:''}"> 🗂️</span>`:'';
     const today2=new Date(); today2.setHours(0,0,0,0);
     const adeiaBadge=i.adeia_lixis&&new Date(i.adeia_lixis)<today2?'<span title="Ληγμένη Άδεια: '+fmtDate(i.adeia_lixis)+'" style="color:#f97316"> ⚠️</span>':'';
-    return `<tr class="${rowCls3}" onclick="openInstModal('${esc(i.fak)}')" title="Κλικ για επεξεργασία">
+    return `<tr class="${rowCls3}" onclick="openFolder('${esc(i.fak)}')" title="Άνοιγμα φακέλου εγκατάστασης">
     <td class="mono">${esc(i.fak)}${lockBadge}${adeiaBadge}</td>
     <td><strong>${esc(i.name)}</strong>${takBadge}</td>
     <td style="font-size:12px">${esc(i.address||'')}</td>
@@ -126,6 +126,8 @@ function openInstModal(fak=null){
   f('if-taktopoi-num').value=i?i.taktopoi_num||'':'';
   f('if-taktopoi-nomos').value=i?i.taktopoi_nomos||'':'';
   f('if-vytio').value=i?i.vytio||'':'';
+  const autoEl=document.getElementById('if-autopsia');
+  if(autoEl) autoEl.value=i?i.autopsia||'':'';
   f('if-adeia-typos').value=i?i.adeia_typos||'':'';
   f('if-adeia-lixis').value=i?i.adeia_lixis||'':'';
   f('if-steg-antlies').value=i?i.steg_antlies||'':'';
@@ -315,6 +317,7 @@ function saveInst(){
     taktopoi_num:document.getElementById('if-taktopoi-num')?document.getElementById('if-taktopoi-num').value.trim():'',
     taktopoi_nomos:document.getElementById('if-taktopoi-nomos')?document.getElementById('if-taktopoi-nomos').value.trim():'',
     vytio:document.getElementById('if-vytio').value.trim(),
+    autopsia:document.getElementById('if-autopsia')?document.getElementById('if-autopsia').value:'',
     adeia_typos:document.getElementById('if-adeia-typos').value,
     adeia_lixis:document.getElementById('if-adeia-lixis').value,
     steg_antlies:document.getElementById('if-steg-antlies').value,
