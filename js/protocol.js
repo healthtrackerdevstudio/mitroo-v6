@@ -654,7 +654,8 @@ function saveProto(){
     reminder_days:reminderDays,
     reminder_date:reminderDate,
     reminder_note:g('pf-reminder-note'),
-    reminder_done: editProtoId ? protoPreserveReminderDone(editProtoId, reminderDate) : false
+    reminder_done: editProtoId ? protoPreserveReminderDone(editProtoId, reminderDate) : false,
+    user: sessionStorage.getItem('fb_email')||''
   };
 
   // ══ ΕΛΕΓΧΟΣ ΔΙΠΛΟΕΓΓΡΑΦΗΣ ══
