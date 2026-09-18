@@ -100,7 +100,7 @@ function buildStoixeiaForm(i){
   const chk = (f) => i[f] ? 'checked' : '';
   // Datalist για Περιοχή από υπάρχουσες τιμές
   const topoList = [...new Set(installations.map(x=>x.topothesia).filter(Boolean))].sort();
-  return `<div class="form-grid" style="padding:4px">
+  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;padding:4px">
 
     <div class="form-group"><label>ΦΑΚ</label>
       <input class="form-control" id="if-fak" value="${v('fak')}" disabled></div>
@@ -150,13 +150,13 @@ function buildStoixeiaForm(i){
 
     <div class="form-group" id="vytio-row" style="display:none">
       <label>Βυτιοφόρο Όχημα</label>
-      <input class="form-control" id="if-vytio" value="${v('vytio')}" placeholder="ΑΑΑ-1234" maxlength="10"></div>
+      <input class="form-control" id="if-vytio" value="${v('vytio')}" placeholder="ΑΑΑ-1234" maxlength="10" style="max-width:140px"></div>
 
     <div class="form-group"><label>Τελευταία Αυτοψία</label>
-      <input class="form-control" type="date" id="if-autopsia" value="${v('autopsia')}" style="max-width:180px"></div>
+      <input class="form-control" type="date" id="if-autopsia" value="${v('autopsia')}" style="max-width:175px"></div>
 
     <div class="form-group"><label>Λήξη Άδειας</label>
-      <input class="form-control" type="date" id="if-adeia-lixis" value="${v('adeia_lixis')}" style="max-width:180px"></div>
+      <input class="form-control" type="date" id="if-adeia-lixis" value="${v('adeia_lixis')}" style="max-width:175px"></div>
 
     <div class="form-group ff"><label>Σημειώσεις</label>
       <textarea class="form-control" id="if-notes" rows="3">${v('notes')}</textarea></div>
@@ -174,30 +174,30 @@ function buildStoixeiaForm(i){
     </div>
 
     <!-- Σφράγιση -->
-    <div class="form-group" id="sfragisi-row">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#dc2626">
+    <div class="form-group ff" id="sfragisi-row" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:10px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#dc2626;margin-bottom:0">
         <input type="checkbox" id="if-sfragisi" ${chk('sfragisi')}
-          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'':'none';})(this)">
+          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
         🔒 Σφράγιση</label>
-      <div id="if-sfragisi-wrap" style="${i.sfragisi?'':'display:none'};margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div><label style="font-size:12px">Ημ. Σφράγισης</label>
-          <input class="form-control" type="date" id="if-sfragisi-ap" value="${v('sfragisi_ap')}" style="max-width:180px;margin-top:4px"></div>
-        <div style="flex:1;min-width:200px"><label style="font-size:12px">Αρ. Απόφασης</label>
-          <input class="form-control" id="if-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ. Απόφασης" style="margin-top:4px"></div>
+      <div id="if-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex-wrap:nowrap;align-items:center;margin-top:8px">
+        <div style="flex:none"><label style="font-size:11px">Ημ. Σφράγισης</label>
+          <input class="form-control" type="date" id="if-sfragisi-ap" value="${v('sfragisi_ap')}" style="width:155px;margin-top:3px"></div>
+        <div style="flex:none;min-width:200px"><label style="font-size:11px">Αρ. Απόφασης</label>
+          <input class="form-control" id="if-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ." style="width:200px;margin-top:3px"></div>
       </div>
     </div>
 
     <!-- Ανάκληση ΑΛ -->
-    <div class="form-group" id="anaklisi-row">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#7c3aed">
+    <div class="form-group ff" id="anaklisi-row" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:var(--radius);padding:10px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#7c3aed;margin-bottom:0">
         <input type="checkbox" id="if-anaklisi" ${chk('anaklisi')}
-          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'':'none';})(this)">
+          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
         🚫 Ανάκληση ΑΛ</label>
-      <div id="if-anaklisi-wrap" style="${i.anaklisi?'':'display:none'};margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div><label style="font-size:12px">Ημ. Ανάκλησης</label>
-          <input class="form-control" type="date" id="if-anaklisi-ap" value="${v('anaklisi_ap')}" style="max-width:180px;margin-top:4px"></div>
-        <div style="flex:1;min-width:200px"><label style="font-size:12px">Αρ. Απόφασης</label>
-          <input class="form-control" id="if-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ. Απόφασης" style="margin-top:4px"></div>
+      <div id="if-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex-wrap:nowrap;align-items:center;margin-top:8px">
+        <div style="flex:none"><label style="font-size:11px">Ημ. Ανάκλησης</label>
+          <input class="form-control" type="date" id="if-anaklisi-ap" value="${v('anaklisi_ap')}" style="width:155px;margin-top:3px"></div>
+        <div style="flex:none;min-width:200px"><label style="font-size:11px">Αρ. Απόφασης</label>
+          <input class="form-control" id="if-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ." style="width:200px;margin-top:3px"></div>
       </div>
     </div>
 
@@ -283,53 +283,53 @@ function folderDeleteCert(id){
 function folderLoadExoplismos(){
   const panel = document.getElementById('folder-panel-exoplismos');
   if(!panel || !_folderFak) return;
-  // Φόρτωση του equipment modal content inline στο panel
-  // Χρησιμοποιούμε το υπάρχον modal body content
-  const equipModalBody = document.querySelector('#modal-equip .modal-body');
-  if(!equipModalBody){
-    panel.innerHTML='<div style="padding:20px;color:var(--text3)">Σφάλμα φόρτωσης εξοπλισμού</div>';
-    return;
-  }
-  // Clone του modal body content
-  panel.innerHTML = '';
-  const clone = equipModalBody.cloneNode(true);
-  panel.appendChild(clone);
-  // Φόρτωση δεδομένων εξοπλισμού για τον ΦΑΚ
-  // Πρέπει να επαναρχικοποιήσουμε τα IDs — απλούστερο να καλέσουμε openEquipModal σιωπηλά
-  // αλλά να κρύψουμε το overlay
+
+  // Καλούμε το openEquipModal κανονικά — φορτώνει τα δεδομένα στα IDs
+  openEquipModal(_folderFak);
+
+  // Μετά τη φόρτωση, παίρνουμε το modal body και το μεταφέρουμε στο panel
   setTimeout(()=>{
-    openEquipModal(_folderFak);
-    // Μετακινούμε το content από το modal στο panel
-    const mbody = document.querySelector('#modal-equip .modal-body');
-    if(mbody){
-      panel.innerHTML = '';
-      // Δημιουργούμε wrapper
-      const wrap = document.createElement('div');
-      wrap.id = 'folder-equip-content';
-      // Copy children
-      [...mbody.children].forEach(ch => wrap.appendChild(ch.cloneNode(true)));
-      panel.appendChild(wrap);
-      // Αποθήκευση
-      const saveBtn = document.createElement('div');
-      saveBtn.style.cssText = 'padding:12px 0;display:flex;justify-content:flex-end';
-      saveBtn.innerHTML = '<button class="btn btn-primary" onclick="folderSaveExoplismos()">💾 Αποθήκευση Εξοπλισμού</button>';
-      panel.appendChild(saveBtn);
-      // Κλείσε το overlay modal
-      const overlay = document.getElementById('modal-equip');
-      if(overlay) overlay.style.display = 'none';
-    }
+    const modalEl = document.getElementById('modal-equip');
+    const bodyEl  = modalEl ? modalEl.querySelector('.modal-body') : null;
+    if(!bodyEl){ panel.innerHTML='<div style="padding:20px;color:var(--text3)">Σφάλμα φόρτωσης</div>'; return; }
+
+    // Κλείνουμε το overlay (κρύβουμε μόνο το overlay wrapper, όχι το content)
+    if(modalEl) modalEl.style.display = 'none';
+    document.body.style.overflow = ''; // restore scroll
+
+    // Μεταφέρουμε το bodyEl DOM node απευθείας στο panel (όχι clone — για να δουλεύουν τα IDs)
+    panel.innerHTML = '';
+    panel.appendChild(bodyEl);
+
+    // Κουμπί αποθήκευσης
+    const saveDiv = document.createElement('div');
+    saveDiv.style.cssText = 'padding:12px 0;display:flex;justify-content:flex-end';
+    saveDiv.innerHTML = '<button class="btn btn-primary" onclick="folderSaveExoplismos()">💾 Αποθήκευση Εξοπλισμού</button>';
+    panel.appendChild(saveDiv);
+
     // Dirty tracking
     panel.querySelectorAll('input,select,textarea').forEach(el=>{
       el.addEventListener('change', ()=>folderMarkDirty('exoplismos'));
       el.addEventListener('input',  ()=>folderMarkDirty('exoplismos'));
     });
-  }, 200);
+  }, 300);
 }
 
 function folderSaveExoplismos(){
-  saveEquip();
+  // Πριν το save, επαναφέρουμε το modal body στο modal (χρειάζεται για το saveEquip)
+  const modalEl = document.getElementById('modal-equip');
+  const panel   = document.getElementById('folder-panel-exoplismos');
+  const bodyEl  = panel ? panel.querySelector('.modal-body') : null;
+  if(modalEl && bodyEl){
+    const footer = modalEl.querySelector('.modal-footer');
+    if(footer) modalEl.insertBefore(bodyEl, footer);
+    else modalEl.appendChild(bodyEl);
+  }
+  saveEquip(); // αποθηκεύει και κλείνει το modal (display:none — δεν φαίνεται)
   folderClearDirty('exoplismos');
   toast('✓ Εξοπλισμός αποθηκεύτηκε','success');
+  // Ξαναφόρτωσε το panel
+  setTimeout(()=>folderLoadExoplismos(), 100);
 }
 
 // ══ TAB: ΣΤΑΤΙΣΤΙΚΑ ════════════════════════════════════════
@@ -350,22 +350,30 @@ function buildFolderStatistika(inst, eq){
   const today = new Date(); today.setHours(0,0,0,0);
   const expiredCerts = certs.filter(c=>c.expiry&&new Date(c.expiry)<today);
   const protoCount = protocol.filter(p=>p.fak===inst.fak).length;
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:4px">
-    <div class="stat-card"><div class="stat-icon blue">📄</div>
-      <div><div class="stat-value">${certs.length}</div><div class="stat-label">Πιστοποιητικά</div></div></div>
-    <div class="stat-card" style="${expiredCerts.length?'background:#fff5f5':''}">
-      <div class="stat-icon red">⚠️</div>
-      <div><div class="stat-value" style="color:${expiredCerts.length?'#dc2626':'inherit'}">${expiredCerts.length}</div>
-        <div class="stat-label">Ληγμένα</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">🛢️</div>
-      <div><div class="stat-value">${activeTanks.length}</div><div class="stat-label">Δεξαμενές</div></div></div>
-    <div class="stat-card"><div class="stat-icon purple">📊</div>
-      <div><div class="stat-value">${totalL?totalL.toLocaleString('el-GR')+'L':'—'}</div>
-        <div class="stat-label">Χωρητικότητα</div></div></div>
-    <div class="stat-card"><div class="stat-icon orange">📋</div>
-      <div><div class="stat-value">${protoCount}</div><div class="stat-label">Κινήσεις Πρωτ.</div></div></div>
+  const cardStyle='background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;min-height:70px';
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;padding:4px">
+    <div style="${cardStyle}">
+      <div style="font-size:22px">📄</div>
+      <div><div style="font-size:22px;font-weight:700;color:var(--accent)">${certs.length}</div>
+        <div style="font-size:11px;color:var(--text3)">Πιστοποιητικά</div></div></div>
+    <div style="${cardStyle}${expiredCerts.length?';background:#fff5f5':''}">
+      <div style="font-size:22px">⚠️</div>
+      <div><div style="font-size:22px;font-weight:700;color:${expiredCerts.length?'#dc2626':'var(--text)'}">${expiredCerts.length}</div>
+        <div style="font-size:11px;color:var(--text3)">Ληγμένα</div></div></div>
+    <div style="${cardStyle}">
+      <div style="font-size:22px">🛢️</div>
+      <div><div style="font-size:22px;font-weight:700;color:#0891b2">${activeTanks.length}</div>
+        <div style="font-size:11px;color:var(--text3)">Ενεργές Δεξαμενές</div></div></div>
+    <div style="${cardStyle}">
+      <div style="font-size:22px">📊</div>
+      <div><div style="font-size:18px;font-weight:700;color:#7c3aed">${totalL?totalL.toLocaleString('el-GR')+'L':'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">Χωρητικότητα</div></div></div>
+    <div style="${cardStyle}">
+      <div style="font-size:22px">📋</div>
+      <div><div style="font-size:22px;font-weight:700;color:#d97706">${protoCount}</div>
+        <div style="font-size:11px;color:var(--text3)">Κινήσεις Πρωτ.</div></div></div>
   </div>
-  <div style="margin-top:16px">
+  <div style="margin-top:16px;padding:4px">
     <button class="btn btn-secondary btn-sm" onclick="printInstReport('${esc(inst.fak||'')}')">🖨️ Εκτύπωση Report</button>
   </div>`;
 }
