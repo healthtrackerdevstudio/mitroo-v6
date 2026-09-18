@@ -32,6 +32,8 @@ function closeFolder(){
   }
   _folderFak = null;
   _folderDirty = {};
+  const modal = document.querySelector('#modal-folder .modal');
+  if(modal){ modal.style.background=''; modal.style.borderTop=''; }
   document.getElementById('modal-folder').style.display = 'none';
   document.body.style.overflow = '';
   // Επαναφορά λίστας
@@ -92,6 +94,7 @@ function folderLoadStoixeia(){
       el.addEventListener('input',  ()=>folderMarkDirty('stoixeia'));
     });
     onInstTypeChange();
+    folderUpdateModalBg();
   }, 100);
 }
 
@@ -158,7 +161,9 @@ function buildStoixeiaForm(i){
     <div class="form-group"><label>Λήξη Άδειας</label>
       <input class="form-control" type="date" id="if-adeia-lixis" value="${v('adeia_lixis')}" style="max-width:175px"></div>
 
-    <div class="form-group ff"><label>Σημειώσεις</label>
+    <div class="form-group" style="grid-column:3"></div>
+
+    <div class="form-group ff" style="grid-column:1/-1"><label>Σημειώσεις</label>
       <textarea class="form-control" id="if-notes" rows="3">${v('notes')}</textarea></div>
 
     <!-- Τακτοποίηση -->
@@ -174,10 +179,10 @@ function buildStoixeiaForm(i){
     </div>
 
     <!-- Σφράγιση -->
-    <div class="form-group ff" id="sfragisi-row" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:10px">
+    <div class="form-group ff" id="sfragisi-row" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:10px;grid-column:1/-1">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#dc2626;margin-bottom:0">
         <input type="checkbox" id="if-sfragisi" ${chk('sfragisi')}
-          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
+          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderUpdateModalBg();})(this)">
         🔒 Σφράγιση</label>
       <div id="if-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex-wrap:nowrap;align-items:center;margin-top:8px">
         <div style="flex:none"><label style="font-size:11px">Ημ. Σφράγισης</label>
@@ -188,10 +193,10 @@ function buildStoixeiaForm(i){
     </div>
 
     <!-- Ανάκληση ΑΛ -->
-    <div class="form-group ff" id="anaklisi-row" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:var(--radius);padding:10px">
+    <div class="form-group ff" id="anaklisi-row" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:var(--radius);padding:10px;grid-column:1/-1">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#7c3aed;margin-bottom:0">
         <input type="checkbox" id="if-anaklisi" ${chk('anaklisi')}
-          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
+          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderUpdateModalBg();})(this)">
         🚫 Ανάκληση ΑΛ</label>
       <div id="if-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex-wrap:nowrap;align-items:center;margin-top:8px">
         <div style="flex:none"><label style="font-size:11px">Ημ. Ανάκλησης</label>
@@ -205,12 +210,47 @@ function buildStoixeiaForm(i){
 }
 
 function folderSaveStoixeia(){
-  // Χρησιμοποιούμε την υπάρχουσα saveInst() αλλά με _folderFak ως editInstId
-  const prevEdit = editInstId;
-  editInstId = _folderFak;
-  const ok = saveInstSilent(); // επιστρέφει true/false χωρίς να κλείνει modal
-  editInstId = prevEdit;
-  if(ok){ folderClearDirty('stoixeia'); toast('✓ Στοιχεία αποθηκεύτηκαν','success'); }
+  if(!_folderFak) return;
+  const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+  const gc = id => { const el=document.getElementById(id); return !!(el&&el.checked); };
+
+  const name=g('if-name');
+  if(!name){ toast('⚠️ Η Επωνυμία είναι υποχρεωτική','error'); return; }
+
+  const idx=installations.findIndex(i=>i.fak===_folderFak);
+  if(idx<0){ toast('Δεν βρέθηκε η εγκατάσταση','error'); return; }
+
+  // Merge — κρατάμε τα υπάρχοντα πεδία και ενημερώνουμε μόνο αυτά που έχουμε στη φόρμα
+  installations[idx]={
+    ...installations[idx],
+    sheet:      g('if-sheet'),
+    type:       document.getElementById('if-type')?.value==='__other__' ? g('if-other-type') : g('if-type'),
+    adeia_num:  g('if-adeia-num'),
+    name,
+    afm:        g('if-afm'),
+    topothesia: g('if-topothesia'),
+    address:    g('if-address'),
+    tel:        g('if-tel'),
+    email:      g('if-email'),
+    ypeuthinos: g('if-ypeuthinos'),
+    vytio:      g('if-vytio'),
+    autopsia:   g('if-autopsia'),
+    adeia_lixis:g('if-adeia-lixis'),
+    notes:      g('if-notes'),
+    taktopoi:   gc('if-taktopoi'),
+    taktopoi_num:   g('if-taktopoi-num'),
+    taktopoi_nomos: g('if-taktopoi-nomos'),
+    sfragisi:       gc('if-sfragisi'),
+    sfragisi_ap:    g('if-sfragisi-ap'),
+    sfragisi_ref:   g('if-sfragisi-ref'),
+    anaklisi:       gc('if-anaklisi'),
+    anaklisi_ap:    g('if-anaklisi-ap'),
+    anaklisi_ref:   g('if-anaklisi-ref'),
+  };
+  save('inst', installations);
+  folderClearDirty('stoixeia');
+  toast('✓ Στοιχεία αποθηκεύτηκαν','success');
+  try{ updateBadges(); renderInst(); }catch(e){}
 }
 
 // ══ TAB: ΠΙΣΤΟΠΟΙΗΤΙΚΑ ═════════════════════════════════════
@@ -416,7 +456,25 @@ function folderLoadIstoriko(){
   </div>`;
 }
 
-// ── Εμφάνιση/απόκρυψη per-tab save buttons ──────────────────
+// ── Αλλαγή φόντου modal βάσει Σφράγισης/Ανάκλησης ──────────
+function folderUpdateModalBg(){
+  const modal = document.querySelector('#modal-folder .modal');
+  if(!modal) return;
+  const sfr = document.getElementById('if-sfragisi');
+  const ana = document.getElementById('if-anaklisi');
+  const isSfr = sfr && sfr.checked;
+  const isAna = ana && ana.checked;
+  if(isSfr){
+    modal.style.background = '#fff0f0';
+    modal.style.borderTop = '4px solid #dc2626';
+  } else if(isAna){
+    modal.style.background = '#faf5ff';
+    modal.style.borderTop = '4px solid #7c3aed';
+  } else {
+    modal.style.background = '';
+    modal.style.borderTop = '';
+  }
+}
 function folderUpdateTabSaveBtns(tab){
   const btns = {
     'stoixeia':'folder-save-stoixeia',
