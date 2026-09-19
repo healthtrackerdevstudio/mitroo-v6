@@ -1,69 +1,71 @@
 // ══════════════════════════════════════════════════════════
-//  inst-folder.js  —  Φάκελος Εγκατάστασης (tabbed modal)
-//  Tabs: Στοιχεία · Πιστοποιητικά · Εξοπλισμός · Στατιστικά · Ιστορικό
+//  inst-folder.js  —  Φάκελος Εγκατάστασης v2
+//  Αρχιτεκτονική: το folder modal είναι ο container.
+//  Tabs Εξοπλισμός/Πιστοποιητικά ανοίγουν τα υπάρχοντα
+//  modals (modal-equip, modal-cert) πάνω από το folder.
+//  Μόνο τα tabs Στοιχεία, Στατιστικά, Ιστορικό έχουν
+//  inline περιεχόμενο.
 // ══════════════════════════════════════════════════════════
 
-let _folderFak = null;          // τρέχων ανοιχτός φάκελος
-let _folderTab = 'stoixeia';    // τρέχον tab
-let _folderDirty = {};          // {tab: true/false} — unsaved changes
+let _folderFak   = null;
+let _folderTab   = 'stoixeia';
+let _folderDirty = {};
+
 const FOLDER_TABS = ['stoixeia','pistopoiitika','exoplismos','statistika','istoriko'];
 
-// ── Άνοιγμα φακέλου ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+//  ΑΝΟΙΓΜΑ / ΚΛΕΙΣΙΜΟ ΦΑΚΕΛΟΥ
+// ─────────────────────────────────────────────────────────
 function openFolder(fak, tab='stoixeia'){
-  _folderFak = fak;
+  _folderFak   = fak;
   _folderDirty = {};
-  const inst = installations.find(i=>i.fak===fak);
-  const title = inst ? `${esc(fak)} — ${esc(inst.name||'')}` : esc(fak);
-  document.getElementById('folder-title').innerHTML = `🗂️ ${title}`;
-  // Κρύψε τη λίστα εγκαταστάσεων
-  const instView = document.getElementById('view-inst');
-  if(instView) instView.style.display = 'none';
-  // Άνοιξε modal
+  const inst = installations.find(i=>i.fak===fak)||{};
+  document.getElementById('folder-title').innerHTML =
+    `🗂️ <strong>${esc(fak)}</strong> — ${esc(inst.name||'')}`;
   document.getElementById('modal-folder').style.display = 'flex';
   document.body.style.overflow = 'hidden';
   folderSwitchTab(tab);
+  folderApplyModalBg();
 }
 
-// ── Κλείσιμο φακέλου ─────────────────────────────────────
 function closeFolder(){
   const hasDirty = Object.values(_folderDirty).some(Boolean);
-  if(hasDirty){
-    if(!confirm('Έχουν γίνει αλλαγές που δεν έχουν αποθηκευτεί.\nΚλείσιμο χωρίς αποθήκευση;')) return;
-  }
-  _folderFak = null;
+  if(hasDirty && !confirm('Έχουν γίνει αλλαγές που δεν έχουν αποθηκευτεί.\nΚλείσιμο χωρίς αποθήκευση;')) return;
+  _folderFak   = null;
   _folderDirty = {};
-  const modal = document.querySelector('#modal-folder .modal');
-  if(modal){ modal.style.background=''; modal.style.borderTop=''; }
+  const m = document.querySelector('#modal-folder .modal');
+  if(m){ m.style.background=''; m.style.borderTop=''; }
   document.getElementById('modal-folder').style.display = 'none';
   document.body.style.overflow = '';
-  // Επαναφορά λίστας
-  const instView = document.getElementById('view-inst');
-  if(instView) instView.style.display = '';
 }
 
-// ── Αλλαγή tab ───────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+//  TAB NAVIGATION
+// ─────────────────────────────────────────────────────────
 function folderSwitchTab(tab){
   _folderTab = tab;
-  // Nav buttons
   FOLDER_TABS.forEach(t=>{
     const btn = document.getElementById('folder-tab-'+t);
     if(btn) btn.classList.toggle('active', t===tab);
-  });
-  // Panels
-  FOLDER_TABS.forEach(t=>{
     const panel = document.getElementById('folder-panel-'+t);
     if(panel) panel.style.display = t===tab ? '' : 'none';
   });
-  // Φόρτωση περιεχομένου tab
+  // Per-tab save buttons
+  ['stoixeia','pistopoiitika','exoplismos'].forEach(t=>{
+    const b = document.getElementById('folder-save-'+t);
+    if(b) b.style.display = t===tab ? '' : 'none';
+  });
   if(tab==='stoixeia')        folderLoadStoixeia();
-  else if(tab==='pistopoiitika') folderLoadPistopoiitika();
-  else if(tab==='exoplismos') folderLoadExoplismos();
   else if(tab==='statistika') folderLoadStatistika();
   else if(tab==='istoriko')   folderLoadIstoriko();
-  folderUpdateTabSaveBtns(tab);
+  // Πιστοποιητικά/Εξοπλισμός: τα panels δείχνουν shortcut buttons
+  else if(tab==='pistopoiitika') folderLoadPistopoiitikaPanel();
+  else if(tab==='exoplismos')    folderLoadExoplismosPanel();
 }
 
-// ── Dirty tracking ────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+//  DIRTY TRACKING
+// ─────────────────────────────────────────────────────────
 function folderMarkDirty(tab){
   _folderDirty[tab] = true;
   const btn = document.getElementById('folder-tab-'+tab);
@@ -80,30 +82,19 @@ function folderClearDirty(tab){
   if(btn){ const dot=btn.querySelector('.dirty-dot'); if(dot) dot.remove(); }
 }
 
-// ══ TAB: ΣΤΟΙΧΕΙΑ ══════════════════════════════════════════
+// ─────────────────────────────────────────────────────────
+//  TAB: ΣΤΟΙΧΕΙΑ (inline form)
+// ─────────────────────────────────────────────────────────
 function folderLoadStoixeia(){
   const panel = document.getElementById('folder-panel-stoixeia');
   if(!panel || !_folderFak) return;
-  // Χρησιμοποιούμε το υπάρχον openInstModal — αλλά render στο panel
-  const inst = installations.find(i=>i.fak===_folderFak)||{};
-  panel.innerHTML = buildStoixeiaForm(inst);
-  // Dirty tracking μόνο μετά από user interaction
-  setTimeout(()=>{
-    panel.querySelectorAll('input,select,textarea').forEach(el=>{
-      el.addEventListener('change', ()=>folderMarkDirty('stoixeia'));
-      el.addEventListener('input',  ()=>folderMarkDirty('stoixeia'));
-    });
-    onInstTypeChange();
-    folderUpdateModalBg();
-  }, 100);
-}
-
-function buildStoixeiaForm(i){
+  const i = installations.find(x=>x.fak===_folderFak)||{};
   const v = (f,def='') => esc(i[f]||def);
-  const chk = (f) => i[f] ? 'checked' : '';
-  // Datalist για Περιοχή από υπάρχουσες τιμές
+  const chk = f => i[f] ? 'checked' : '';
   const topoList = [...new Set(installations.map(x=>x.topothesia).filter(Boolean))].sort();
-  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;padding:4px">
+
+  panel.innerHTML = `
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;padding:4px">
 
     <div class="form-group"><label>ΦΑΚ</label>
       <input class="form-control" id="if-fak" value="${v('fak')}" disabled></div>
@@ -129,17 +120,17 @@ function buildStoixeiaForm(i){
       <label>Άλλος Τύπος</label>
       <input class="form-control" id="if-other-type" value="${!INST_TYPES.includes(i.type)?v('type'):''}"></div>
 
-    <div class="form-group ff"><label>Επωνυμία <span class="req">*</span></label>
+    <div class="form-group ff" style="grid-column:1/-1"><label>Επωνυμία <span class="req">*</span></label>
       <input class="form-control" id="if-name" value="${v('name')}"></div>
 
     <div class="form-group"><label>ΑΦΜ</label>
       <input class="form-control" id="if-afm" value="${v('afm')}"></div>
 
     <div class="form-group"><label>Περιοχή</label>
-      <input class="form-control" id="if-topothesia" placeholder="π.χ. ΒΑΡΗ" list="folder-topo-datalist" autocomplete="off" value="${v('topothesia')}">
-      <datalist id="folder-topo-datalist">${topoList.map(t=>`<option value="${esc(t)}">`).join('')}</datalist></div>
+      <input class="form-control" id="if-topothesia" value="${v('topothesia')}" list="folder-topo-list" autocomplete="off">
+      <datalist id="folder-topo-list">${topoList.map(t=>`<option value="${esc(t)}">`).join('')}</datalist></div>
 
-    <div class="form-group ff"><label>Διεύθυνση <span class="req">*</span></label>
+    <div class="form-group ff" style="grid-column:1/-1"><label>Διεύθυνση <span class="req">*</span></label>
       <input class="form-control" id="if-address" value="${v('address')}"></div>
 
     <div class="form-group"><label>Τηλέφωνο</label>
@@ -161,347 +152,374 @@ function buildStoixeiaForm(i){
     <div class="form-group"><label>Λήξη Άδειας</label>
       <input class="form-control" type="date" id="if-adeia-lixis" value="${v('adeia_lixis')}" style="max-width:175px"></div>
 
-    <div class="form-group" style="grid-column:3"></div>
-
     <div class="form-group ff" style="grid-column:1/-1"><label>Σημειώσεις</label>
       <textarea class="form-control" id="if-notes" rows="3">${v('notes')}</textarea></div>
 
     <!-- Τακτοποίηση -->
-    <div class="form-group ff" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:10px">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:#15803d">
-        <input type="checkbox" id="if-taktopoi" onchange="toggleTaktopoi(this)" ${chk('taktopoi')}>🗂️ Τακτοποίηση</label>
-      <div id="if-taktopoi-wrap" style="${i.taktopoi?'':'display:none'};margin-top:8px;display:flex;gap:10px;flex-wrap:wrap">
-        <div><label style="font-size:12px">Αριθμός</label>
-          <input class="form-control" id="if-taktopoi-num" value="${v('taktopoi_num')}" style="max-width:200px;margin-top:4px"></div>
-        <div style="flex:1;min-width:180px"><label style="font-size:12px">Νόμος</label>
-          <input class="form-control" id="if-taktopoi-nomos" value="${v('taktopoi_nomos')}" style="margin-top:4px"></div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:8px 12px;grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#15803d;white-space:nowrap;flex-shrink:0;min-width:130px">
+        <input type="checkbox" id="if-taktopoi" ${chk('taktopoi')}
+          onchange="(function(cb){const w=document.getElementById('if-taktopoi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
+        🗂️ Τακτοποίηση</label>
+      <div id="if-taktopoi-wrap" style="display:${i.taktopoi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <label style="font-size:11px;color:var(--text3)">Αριθμός</label>
+          <input class="form-control" id="if-taktopoi-num" value="${v('taktopoi_num')}" placeholder="πχ. 12345/2026" style="width:170px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
+          <label style="font-size:11px;color:var(--text3)">Νόμος</label>
+          <input class="form-control" id="if-taktopoi-nomos" value="${v('taktopoi_nomos')}" placeholder="πχ. Ν.4495/2017"></div>
       </div>
     </div>
 
     <!-- Σφράγιση -->
-    <div class="form-group ff" id="sfragisi-row" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:10px;grid-column:1/-1">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#dc2626;margin-bottom:0">
+    <div id="sfragisi-row" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:8px 12px;grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#dc2626;white-space:nowrap;flex-shrink:0;min-width:130px">
         <input type="checkbox" id="if-sfragisi" ${chk('sfragisi')}
-          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderUpdateModalBg();})(this)">
+          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderApplyModalBg();})(this)">
         🔒 Σφράγιση</label>
-      <div id="if-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex-wrap:nowrap;align-items:center;margin-top:8px">
-        <div style="flex:none"><label style="font-size:11px">Ημ. Σφράγισης</label>
-          <input class="form-control" type="date" id="if-sfragisi-ap" value="${v('sfragisi_ap')}" style="width:155px;margin-top:3px"></div>
-        <div style="flex:none;min-width:200px"><label style="font-size:11px">Αρ. Απόφασης</label>
-          <input class="form-control" id="if-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ." style="width:200px;margin-top:3px"></div>
+      <div id="if-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <label style="font-size:11px;color:var(--text3)">Ημ. Σφράγισης</label>
+          <input class="form-control" type="date" id="if-sfragisi-ap" value="${v('sfragisi_ap')}" style="width:160px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
+          <label style="font-size:11px;color:var(--text3)">Αρ. Απόφασης</label>
+          <input class="form-control" id="if-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ."></div>
       </div>
     </div>
 
     <!-- Ανάκληση ΑΛ -->
-    <div class="form-group ff" id="anaklisi-row" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:var(--radius);padding:10px;grid-column:1/-1">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#7c3aed;margin-bottom:0">
+    <div id="anaklisi-row" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:var(--radius);padding:8px 12px;grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#7c3aed;white-space:nowrap;flex-shrink:0;min-width:130px">
         <input type="checkbox" id="if-anaklisi" ${chk('anaklisi')}
-          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderUpdateModalBg();})(this)">
+          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderApplyModalBg();})(this)">
         🚫 Ανάκληση ΑΛ</label>
-      <div id="if-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex-wrap:nowrap;align-items:center;margin-top:8px">
-        <div style="flex:none"><label style="font-size:11px">Ημ. Ανάκλησης</label>
-          <input class="form-control" type="date" id="if-anaklisi-ap" value="${v('anaklisi_ap')}" style="width:155px;margin-top:3px"></div>
-        <div style="flex:none;min-width:200px"><label style="font-size:11px">Αρ. Απόφασης</label>
-          <input class="form-control" id="if-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ." style="width:200px;margin-top:3px"></div>
+      <div id="if-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <label style="font-size:11px;color:var(--text3)">Ημ. Ανάκλησης</label>
+          <input class="form-control" type="date" id="if-anaklisi-ap" value="${v('anaklisi_ap')}" style="width:160px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
+          <label style="font-size:11px;color:var(--text3)">Αρ. Απόφασης</label>
+          <input class="form-control" id="if-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ."></div>
       </div>
     </div>
 
   </div>`;
+
+  // Dirty tracking — μόνο μετά από user interaction
+  setTimeout(()=>{
+    panel.querySelectorAll('input,select,textarea').forEach(el=>{
+      el.addEventListener('change', ()=>folderMarkDirty('stoixeia'));
+      el.addEventListener('input',  ()=>folderMarkDirty('stoixeia'));
+    });
+    if(typeof onInstTypeChange==='function') onInstTypeChange();
+    folderApplyModalBg();
+  }, 80);
 }
 
 function folderSaveStoixeia(){
   if(!_folderFak) return;
-  const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
-  const gc = id => { const el=document.getElementById(id); return !!(el&&el.checked); };
-
-  const name=g('if-name');
+  const g  = id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+  const gc = id=>{ const el=document.getElementById(id); return !!(el&&el.checked); };
+  const name = g('if-name');
   if(!name){ toast('⚠️ Η Επωνυμία είναι υποχρεωτική','error'); return; }
-
-  const idx=installations.findIndex(i=>i.fak===_folderFak);
+  const address = g('if-address');
+  if(!address){ toast('⚠️ Η Διεύθυνση είναι υποχρεωτική','error'); return; }
+  const idx = installations.findIndex(i=>i.fak===_folderFak);
   if(idx<0){ toast('Δεν βρέθηκε η εγκατάσταση','error'); return; }
-
-  // Merge — κρατάμε τα υπάρχοντα πεδία και ενημερώνουμε μόνο αυτά που έχουμε στη φόρμα
-  installations[idx]={
+  const typeRaw = g('if-type');
+  const type = typeRaw==='__other__' ? g('if-other-type') : typeRaw;
+  installations[idx] = {
     ...installations[idx],
-    sheet:      g('if-sheet'),
-    type:       document.getElementById('if-type')?.value==='__other__' ? g('if-other-type') : g('if-type'),
-    adeia_num:  g('if-adeia-num'),
-    name,
-    afm:        g('if-afm'),
-    topothesia: g('if-topothesia'),
-    address:    g('if-address'),
-    tel:        g('if-tel'),
-    email:      g('if-email'),
-    ypeuthinos: g('if-ypeuthinos'),
-    vytio:      g('if-vytio'),
-    autopsia:   g('if-autopsia'),
-    adeia_lixis:g('if-adeia-lixis'),
-    notes:      g('if-notes'),
-    taktopoi:   gc('if-taktopoi'),
-    taktopoi_num:   g('if-taktopoi-num'),
-    taktopoi_nomos: g('if-taktopoi-nomos'),
-    sfragisi:       gc('if-sfragisi'),
-    sfragisi_ap:    g('if-sfragisi-ap'),
-    sfragisi_ref:   g('if-sfragisi-ref'),
-    anaklisi:       gc('if-anaklisi'),
-    anaklisi_ap:    g('if-anaklisi-ap'),
-    anaklisi_ref:   g('if-anaklisi-ref'),
+    sheet:g('if-sheet'), type, adeia_num:g('if-adeia-num'),
+    name, afm:g('if-afm'), topothesia:g('if-topothesia'), address,
+    tel:g('if-tel'), email:g('if-email'), ypeuthinos:g('if-ypeuthinos'),
+    vytio:g('if-vytio'), autopsia:g('if-autopsia'), adeia_lixis:g('if-adeia-lixis'),
+    notes:g('if-notes'),
+    taktopoi:gc('if-taktopoi'), taktopoi_num:g('if-taktopoi-num'), taktopoi_nomos:g('if-taktopoi-nomos'),
+    sfragisi:gc('if-sfragisi'), sfragisi_ap:g('if-sfragisi-ap'), sfragisi_ref:g('if-sfragisi-ref'),
+    anaklisi:gc('if-anaklisi'), anaklisi_ap:g('if-anaklisi-ap'), anaklisi_ref:g('if-anaklisi-ref'),
   };
   save('inst', installations);
   folderClearDirty('stoixeia');
-  toast('✓ Στοιχεία αποθηκεύτηκαν','success');
   try{ updateBadges(); renderInst(); }catch(e){}
+  toast('✓ Στοιχεία αποθηκεύτηκαν','success');
 }
 
-// ══ TAB: ΠΙΣΤΟΠΟΙΗΤΙΚΑ ═════════════════════════════════════
-function folderLoadPistopoiitika(){
+// ─────────────────────────────────────────────────────────
+//  TAB: ΠΙΣΤΟΠΟΙΗΤΙΚΑ
+//  Εμφανίζει τη λίστα inline + κουμπιά που ανοίγουν το
+//  υπάρχον modal-cert (πάνω από το folder modal)
+// ─────────────────────────────────────────────────────────
+function folderLoadPistopoiitikaPanel(){
   const panel = document.getElementById('folder-panel-pistopoiitika');
   if(!panel || !_folderFak) return;
-  // Re-use renderCerts filtered by fak — render inline
-  const fakCerts = certificates.filter(c=>c.fak===_folderFak);
-  panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:13px;font-weight:600">${fakCerts.length} πιστοποιητικά</span>
-      <button class="btn btn-primary btn-sm" onclick="folderAddCert()">+ Νέο</button>
-    </div>
-    <div id="folder-cert-list"></div>`;
-  folderRenderCertList();
+  folderRenderCertList(panel);
 }
 
-function folderRenderCertList(){
-  const cont = document.getElementById('folder-cert-list');
-  if(!cont) return;
+function folderRenderCertList(panel){
+  if(!panel) panel = document.getElementById('folder-panel-pistopoiitika');
+  if(!panel) return;
   const fakCerts = certificates.filter(c=>c.fak===_folderFak)
     .sort((a,b)=>(a.type||'').localeCompare(b.type||''));
-  if(!fakCerts.length){
-    cont.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Δεν υπάρχουν πιστοποιητικά</div>';
-    return;
-  }
-  const today=new Date(); today.setHours(0,0,0,0);
-  cont.innerHTML=`<table class="tbl" style="font-size:12px"><thead><tr>
-    <th>Τύπος</th><th>Αρ.</th><th>Έκδοση</th><th>Λήξη</th><th>Κατάσταση</th><th></th>
-  </tr></thead><tbody>`+fakCerts.map(c=>{
-    const exp=c.expiry?new Date(c.expiry):null;
-    const expired=exp&&exp<today;
-    const soonDays=exp&&!expired?Math.round((exp-today)/86400000):-1;
-    const soon=soonDays>=0&&soonDays<=30;
-    const badge=expired?'<span class="badge badge-red">Ληγμένο</span>'
-      :soon?`<span class="badge badge-orange">${soonDays}μ.</span>`
-      :exp?'<span class="badge badge-green">OK</span>':'';
-    const rowStyle=expired?'background:#fff5f5':'';
-    return `<tr style="${rowStyle}">
-      <td style="font-weight:600">${esc(c.type||'')}</td>
-      <td class="mono muted">${esc(c.num||'—')}</td>
-      <td class="mono">${c.issue_date?fmtDate(c.issue_date):'—'}</td>
-      <td class="mono">${c.expiry?fmtDate(c.expiry):'—'}</td>
-      <td>${badge}</td>
-      <td style="white-space:nowrap">
-        <button class="btn-icon" onclick="folderEditCert('${c._id}')" title="Επεξεργασία">✏️</button>
-        <button class="btn-icon" onclick="folderDeleteCert('${c._id}')" title="Διαγραφή" style="color:#dc2626">🗑</button>
-      </td>
-    </tr>`;
-  }).join('')+'</tbody></table>';
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;font-weight:600;color:var(--text)">${fakCerts.length} πιστοποιητικά για ΦΑΚ ${esc(_folderFak)}</span>
+      <button class="btn btn-primary btn-sm" onclick="folderAddNewCert()">+ Νέο Πιστοποιητικό</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="tbl" style="font-size:12px"><thead><tr>
+      <th>Τύπος</th><th>Αρ.</th><th>Έκδοση</th><th>Λήξη</th><th>Κατάσταση</th><th style="width:60px"></th>
+    </tr></thead><tbody>
+    ${fakCerts.length ? fakCerts.map(c=>{
+      const exp = c.expiry ? new Date(c.expiry) : null;
+      const expired = exp && exp < today;
+      const soonDays = exp && !expired ? Math.round((exp-today)/86400000) : -1;
+      const soon = soonDays>=0 && soonDays<=30;
+      const badge = expired ? '<span class="badge badge-red">Ληγμένο</span>'
+        : soon ? `<span class="badge badge-orange">${soonDays}μ.</span>`
+        : exp ? '<span class="badge badge-green">OK</span>' : '';
+      return `<tr style="${expired?'background:#fff5f5':''}">
+        <td style="font-weight:600">${esc(c.type||'')}</td>
+        <td class="mono muted">${esc(c.num||'—')}</td>
+        <td class="mono">${c.issue_date?fmtDate(c.issue_date):'—'}</td>
+        <td class="mono">${c.expiry?fmtDate(c.expiry):'—'}</td>
+        <td>${badge}</td>
+        <td style="white-space:nowrap">
+          <button class="btn-icon" onclick="folderEditCert('${esc(c._id||'')}')" title="Επεξεργασία">✏️</button>
+          <button class="btn-icon" onclick="folderDeleteCert('${esc(c._id||'')}')" title="Διαγραφή" style="color:#dc2626">🗑</button>
+        </td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="6" class="table-empty">Δεν υπάρχουν πιστοποιητικά</td></tr>'}
+    </tbody></table></div>`;
 }
 
-function folderAddCert(){
-  // Ανοίγει το υπάρχον cert modal με prefill ΦΑΚ
+function folderAddNewCert(){
+  // Ανοίγει το υπάρχον cert modal με προεπιλεγμένο ΦΑΚ
   openCertModal(null, _folderFak);
+  // Μετά το κλείσιμο του cert modal, ανανέωση λίστας
+  _folderPendingCertRefresh = true;
 }
+
 function folderEditCert(id){
   const c = certificates.find(x=>x._id===id);
-  if(c) openCertModal(c);
+  if(!c){ toast('Δεν βρέθηκε το πιστοποιητικό','error'); return; }
+  openCertModal(c, null);
+  _folderPendingCertRefresh = true;
 }
+
 function folderDeleteCert(id){
   if(!confirm('Διαγραφή πιστοποιητικού;')) return;
   certificates = certificates.filter(c=>c._id!==id);
-  save('certs',certificates);
+  save('certs', certificates);
   folderRenderCertList();
   toast('🗑 Διαγράφηκε','info');
+  try{ updateBadges(); renderCerts(); }catch(e){}
 }
 
-// ══ TAB: ΕΞΟΠΛΙΣΜΟΣ ════════════════════════════════════════
-function folderLoadExoplismos(){
+// Flag για ανανέωση λίστας μετά από cert modal
+let _folderPendingCertRefresh = false;
+// Καλείται από closeModal όταν κλείνει το modal-cert
+function folderOnCertModalClose(){
+  if(_folderPendingCertRefresh && _folderFak){
+    _folderPendingCertRefresh = false;
+    folderRenderCertList();
+    try{ updateBadges(); renderCerts(); }catch(e){}
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  TAB: ΕΞΟΠΛΙΣΜΟΣ
+//  Εμφανίζει σύνοψη + κουμπί που ανοίγει το modal-equip
+// ─────────────────────────────────────────────────────────
+function folderLoadExoplismosPanel(){
   const panel = document.getElementById('folder-panel-exoplismos');
   if(!panel || !_folderFak) return;
+  const eq = equipment.find(e=>e.fak===_folderFak)||{};
+  const tanks = eq.tanks||[];
+  const activeTanks = tanks.filter(t=>!t.abolished);
+  const abolishedTanks = tanks.filter(t=>t.abolished);
+  const totalL = activeTanks.reduce((s,t)=>s+Number(t.liters||0),0);
+  const hasPumps = (eq.pumps||[]).length > 0;
+  const hasPlynteria = (eq.plynteria||[]).length > 0 || eq.plyntirio;
+  const hasLipaderia = (eq.lipaderia||[]).length > 0 || eq.lipantirio;
 
-  // Καλούμε το openEquipModal κανονικά — φορτώνει τα δεδομένα στα IDs
+  const extras = [];
+  if(eq.stage2) extras.push('Stage II'+(eq.stage2_dx?' →ΔΞ'+eq.stage2_dx:''));
+  if(eq.artho25) extras.push('Αρ.25');
+  if(eq.artho27) extras.push('Αρ.27');
+  if(eq.steg_freatia) extras.push('Στεγ.Φρεάτια');
+  if(eq.auto_politis) extras.push('Αυτ.Πωλητής');
+  if(eq.offset_filling) extras.push('Offset');
+  if(eq.lakkos) extras.push('Λάκκος');
+  if(eq.eisroes) extras.push('Εισρ.-Εκρ.');
+  if(eq.pezodromiko) extras.push('Πεζοδρομιακό');
+
+  panel.innerHTML = `
+    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;font-weight:600">Εξοπλισμός ΦΑΚ ${esc(_folderFak)}</span>
+      <button class="btn btn-primary btn-sm" onclick="folderOpenEquipModal()">✏️ Επεξεργασία Εξοπλισμού</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">🛢️ ΔΕΞΑΜΕΝΕΣ</div>
+        ${activeTanks.length ? activeTanks.map(t=>`
+          <div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">
+            <span style="font-weight:600">${esc(t.fuel||'—')}</span>
+            <span style="color:var(--text3);font-size:11px"> · ${Number(t.liters||0).toLocaleString('el-GR')}L</span>
+            ${t.mitroo?`<div style="font-size:10px;color:var(--text3);font-family:monospace">${esc(t.mitroo)}</div>`:''}
+          </div>`).join('') : '<div style="font-size:12px;color:var(--text3)">Καμία</div>'}
+        ${abolishedTanks.length ? `<div style="font-size:11px;color:#dc2626;margin-top:4px">❌ ${abolishedTanks.length} κατηργημένες</div>` : ''}
+        <div style="font-size:12px;font-weight:700;margin-top:6px;color:var(--accent)">${totalL?totalL.toLocaleString('el-GR')+' L σύνολο':''}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">⛽ ΑΝΤΛΙΕΣ &amp; ΕΞΟΠΛΙΣΜΟΣ</div>
+        <div style="font-size:12px">${hasPumps?'✓ Αντλίες καυσίμων':'—'}</div>
+        <div style="font-size:12px">${hasPlynteria?'✓ Πλυντήριο':'—'}</div>
+        <div style="font-size:12px">${hasLipaderia?'✓ Λιπαντήριο':'—'}</div>
+        ${eq.fortistes?`<div style="font-size:12px">✓ Φορτιστές: ${esc(eq.fortistes)}</div>`:''}
+      </div>
+      ${extras.length ? `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">🔧 ΕΠΙΠΛΕΟΝ</div>
+        ${extras.map(e=>`<div style="font-size:12px">✓ ${esc(e)}</div>`).join('')}
+      </div>` : ''}
+    </div>`;
+}
+
+function folderOpenEquipModal(){
   openEquipModal(_folderFak);
-
-  // Μετά τη φόρτωση, παίρνουμε το modal body και το μεταφέρουμε στο panel
-  setTimeout(()=>{
-    const modalEl = document.getElementById('modal-equip');
-    const bodyEl  = modalEl ? modalEl.querySelector('.modal-body') : null;
-    if(!bodyEl){ panel.innerHTML='<div style="padding:20px;color:var(--text3)">Σφάλμα φόρτωσης</div>'; return; }
-
-    // Κλείνουμε το overlay (κρύβουμε μόνο το overlay wrapper, όχι το content)
-    if(modalEl) modalEl.style.display = 'none';
-    document.body.style.overflow = ''; // restore scroll
-
-    // Μεταφέρουμε το bodyEl DOM node απευθείας στο panel (όχι clone — για να δουλεύουν τα IDs)
-    panel.innerHTML = '';
-    panel.appendChild(bodyEl);
-
-    // Κουμπί αποθήκευσης
-    const saveDiv = document.createElement('div');
-    saveDiv.style.cssText = 'padding:12px 0;display:flex;justify-content:flex-end';
-    saveDiv.innerHTML = '<button class="btn btn-primary" onclick="folderSaveExoplismos()">💾 Αποθήκευση Εξοπλισμού</button>';
-    panel.appendChild(saveDiv);
-
-    // Dirty tracking
-    panel.querySelectorAll('input,select,textarea').forEach(el=>{
-      el.addEventListener('change', ()=>folderMarkDirty('exoplismos'));
-      el.addEventListener('input',  ()=>folderMarkDirty('exoplismos'));
-    });
-  }, 300);
+  _folderPendingEquipRefresh = true;
 }
 
-function folderSaveExoplismos(){
-  // Πριν το save, επαναφέρουμε το modal body στο modal (χρειάζεται για το saveEquip)
-  const modalEl = document.getElementById('modal-equip');
-  const panel   = document.getElementById('folder-panel-exoplismos');
-  const bodyEl  = panel ? panel.querySelector('.modal-body') : null;
-  if(modalEl && bodyEl){
-    const footer = modalEl.querySelector('.modal-footer');
-    if(footer) modalEl.insertBefore(bodyEl, footer);
-    else modalEl.appendChild(bodyEl);
+let _folderPendingEquipRefresh = false;
+function folderOnEquipModalClose(){
+  if(_folderPendingEquipRefresh && _folderFak){
+    _folderPendingEquipRefresh = false;
+    folderLoadExoplismosPanel();
+    try{ renderEquip(); }catch(e){}
   }
-  saveEquip(); // αποθηκεύει και κλείνει το modal (display:none — δεν φαίνεται)
-  folderClearDirty('exoplismos');
-  toast('✓ Εξοπλισμός αποθηκεύτηκε','success');
-  // Ξαναφόρτωσε το panel
-  setTimeout(()=>folderLoadExoplismos(), 100);
 }
 
-// ══ TAB: ΣΤΑΤΙΣΤΙΚΑ ════════════════════════════════════════
+// ─────────────────────────────────────────────────────────
+//  TAB: ΣΤΑΤΙΣΤΙΚΑ (inline)
+// ─────────────────────────────────────────────────────────
 function folderLoadStatistika(){
   const panel = document.getElementById('folder-panel-statistika');
   if(!panel || !_folderFak) return;
-  // Φόρτωση inst-stats φιλτραρισμένα για τον ΦΑΚ
-  const eq = equipment.find(e=>e.fak===_folderFak)||{};
   const inst = installations.find(i=>i.fak===_folderFak)||{};
-  panel.innerHTML = buildFolderStatistika(inst, eq);
-}
-
-function buildFolderStatistika(inst, eq){
-  const tanks = eq.tanks||[];
-  const activeTanks = tanks.filter(t=>!t.abolished);
-  const totalL = activeTanks.reduce((s,t)=>s+Number(t.liters||0),0);
-  const certs = certificates.filter(c=>c.fak===inst.fak);
+  const eq   = equipment.find(e=>e.fak===_folderFak)||{};
+  const tanks = (eq.tanks||[]).filter(t=>!t.abolished);
+  const totalL = tanks.reduce((s,t)=>s+Number(t.liters||0),0);
+  const certs = certificates.filter(c=>c.fak===_folderFak);
   const today = new Date(); today.setHours(0,0,0,0);
-  const expiredCerts = certs.filter(c=>c.expiry&&new Date(c.expiry)<today);
-  const protoCount = protocol.filter(p=>p.fak===inst.fak).length;
-  const cardStyle='background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;min-height:70px';
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;padding:4px">
-    <div style="${cardStyle}">
-      <div style="font-size:22px">📄</div>
-      <div><div style="font-size:22px;font-weight:700;color:var(--accent)">${certs.length}</div>
-        <div style="font-size:11px;color:var(--text3)">Πιστοποιητικά</div></div></div>
-    <div style="${cardStyle}${expiredCerts.length?';background:#fff5f5':''}">
-      <div style="font-size:22px">⚠️</div>
-      <div><div style="font-size:22px;font-weight:700;color:${expiredCerts.length?'#dc2626':'var(--text)'}">${expiredCerts.length}</div>
-        <div style="font-size:11px;color:var(--text3)">Ληγμένα</div></div></div>
-    <div style="${cardStyle}">
-      <div style="font-size:22px">🛢️</div>
-      <div><div style="font-size:22px;font-weight:700;color:#0891b2">${activeTanks.length}</div>
-        <div style="font-size:11px;color:var(--text3)">Ενεργές Δεξαμενές</div></div></div>
-    <div style="${cardStyle}">
-      <div style="font-size:22px">📊</div>
-      <div><div style="font-size:18px;font-weight:700;color:#7c3aed">${totalL?totalL.toLocaleString('el-GR')+'L':'—'}</div>
-        <div style="font-size:11px;color:var(--text3)">Χωρητικότητα</div></div></div>
-    <div style="${cardStyle}">
-      <div style="font-size:22px">📋</div>
-      <div><div style="font-size:22px;font-weight:700;color:#d97706">${protoCount}</div>
-        <div style="font-size:11px;color:var(--text3)">Κινήσεις Πρωτ.</div></div></div>
-  </div>
-  <div style="margin-top:16px;padding:4px">
-    <button class="btn btn-secondary btn-sm" onclick="printInstReport('${esc(inst.fak||'')}')">🖨️ Εκτύπωση Report</button>
-  </div>`;
+  const expired = certs.filter(c=>c.expiry&&new Date(c.expiry)<today).length;
+  const soon = certs.filter(c=>{
+    if(!c.expiry) return false;
+    const d=new Date(c.expiry), diff=Math.round((d-today)/86400000);
+    return diff>=0&&diff<=30;
+  }).length;
+  const protoCount = protocol.filter(p=>p.fak===_folderFak).length;
+  const protoOpen  = protocol.filter(p=>p.fak===_folderFak&&!p.teliko&&!p.rejected).length;
+
+  const card = (icon,val,label,color='var(--accent)',bg='var(--surface)') =>
+    `<div style="background:${bg};border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">${icon}</div>
+      <div><div style="font-size:22px;font-weight:700;color:${color}">${val}</div>
+        <div style="font-size:11px;color:var(--text3)">${label}</div></div>
+    </div>`;
+
+  panel.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:4px">
+      ${card('📄', certs.length, 'Πιστοποιητικά')}
+      ${card('⚠️', expired, 'Ληγμένα', expired?'#dc2626':'var(--text)', expired?'#fff5f5':'var(--surface)')}
+      ${card('🔔', soon, 'Λήγουν σύντομα', soon?'#d97706':'var(--text)')}
+      ${card('🛢️', tanks.length, 'Ενεργές Δεξαμενές', '#0891b2')}
+      ${card('📊', totalL?totalL.toLocaleString('el-GR')+'L':'—', 'Χωρητικότητα', '#7c3aed')}
+      ${card('📋', protoCount, 'Κινήσεις Πρωτ.', '#d97706')}
+      ${card('⏳', protoOpen, 'Σε εξέλιξη', protoOpen?'#f97316':'var(--text)')}
+    </div>
+    <div style="margin-top:16px;padding:4px">
+      <button class="btn btn-secondary btn-sm" onclick="printInstReport('${esc(_folderFak)}')">🖨️ Εκτύπωση Report</button>
+    </div>`;
 }
 
-// ══ TAB: ΙΣΤΟΡΙΚΟ ══════════════════════════════════════════
+// ─────────────────────────────────────────────────────────
+//  TAB: ΙΣΤΟΡΙΚΟ (inline — φιλτράρει πρωτόκολλο ανά ΦΑΚ)
+// ─────────────────────────────────────────────────────────
 function folderLoadIstoriko(){
   const panel = document.getElementById('folder-panel-istoriko');
   if(!panel || !_folderFak) return;
-  // Φιλτράρισμα πρωτοκόλλου για τον ΦΑΚ (από όλους τους χρήστες)
+
   const history = protocol.filter(p=>p.fak===_folderFak)
     .sort((a,b)=>(b.hm_xreosis||'').localeCompare(a.hm_xreosis||''));
+
   if(!history.length){
-    panel.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Δεν υπάρχουν κινήσεις πρωτοκόλλου για αυτή την εγκατάσταση</div>';
+    panel.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">Δεν υπάρχουν κινήσεις πρωτοκόλλου για αυτή την εγκατάσταση</div>';
     return;
   }
-  panel.innerHTML=`<div style="overflow-x:auto">
-    <table class="tbl" style="font-size:12px">
-      <thead><tr>
-        <th>Ημ. Χρέωσης</th><th>Αρ. Πρωτ. Εισ.</th><th>Αιτών</th>
-        <th>Αίτημα</th><th>Τελ.Εξ.Ενέργεια</th><th>Κατάσταση</th><th>Χρήστης</th>
-      </tr></thead>
-      <tbody>${history.map(p=>{
-        const phase=p.rejected?'<span class="badge badge-red" style="font-size:10px">❌</span>'
-          :p.teliko?'<span class="badge badge-green" style="font-size:10px">✓</span>'
-          :p.hm_exerx?'<span class="badge badge-yellow" style="font-size:10px">→</span>'
-          :'<span class="badge badge-blue" style="font-size:10px">⏳</span>';
-        const rawUser = p.user || p._user || '';
-        const user = rawUser ? rawUser.split('@')[0] : '—';
-        return `<tr style="cursor:pointer" onclick="openProtoModal('${esc(p._id||'')}')">
-          <td class="mono">${fmtDate(p.hm_xreosis)}</td>
-          <td class="mono muted">${esc(p.proto_eisx||'')}</td>
-          <td>${esc(p.aition||'')}</td>
-          <td style="color:var(--text2)">${esc(p.aitima||'')}</td>
-          <td style="color:var(--text2)">${esc(p.energeia||'—')}</td>
-          <td>${phase}</td>
-          <td style="font-size:11px;color:var(--text3)">${esc(user)}</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>
-  </div>`;
+
+  panel.innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${history.length} κινήσεις</div>
+    <div style="overflow-x:auto">
+    <table class="tbl" style="font-size:12px"><thead><tr>
+      <th>Ημ. Χρέωσης</th><th>Αρ. Πρωτ. Εισ.</th><th>Αιτών</th>
+      <th>Αίτημα</th><th>Τελ.Εξ.Ενέργεια</th><th>Κατάσταση</th><th>Χρήστης</th>
+    </tr></thead><tbody>
+    ${history.map(p=>{
+      const phase = p.rejected ? '<span class="badge badge-red" style="font-size:10px">❌</span>'
+        : p.teliko ? '<span class="badge badge-green" style="font-size:10px">✓</span>'
+        : p.hm_exerx ? '<span class="badge badge-yellow" style="font-size:10px">→</span>'
+        : '<span class="badge badge-blue" style="font-size:10px">⏳</span>';
+      const user = p.user ? p.user.split('@')[0] : '—';
+      return `<tr style="cursor:pointer" onclick="openProtoModal('${esc(p._id||'')}')">
+        <td class="mono">${fmtDate(p.hm_xreosis)}</td>
+        <td class="mono muted">${esc(p.proto_eisx||'')}</td>
+        <td>${esc(p.aition||'')}</td>
+        <td style="color:var(--text2)">${esc(p.aitima||'')}</td>
+        <td style="color:var(--text2)">${esc(p.energeia||'—')}</td>
+        <td>${phase}</td>
+        <td style="font-size:11px;color:var(--text3)">${esc(user)}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
 }
 
-// ── Αλλαγή φόντου modal βάσει Σφράγισης/Ανάκλησης ──────────
-function folderUpdateModalBg(){
+// ─────────────────────────────────────────────────────────
+//  GLOBAL SAVE
+// ─────────────────────────────────────────────────────────
+function folderSaveAll(){
+  const dirty = Object.entries(_folderDirty).filter(([,v])=>v).map(([k])=>k);
+  if(!dirty.length){ toast('Δεν υπάρχουν αλλαγές','info'); return; }
+  if(dirty.includes('stoixeia')) folderSaveStoixeia();
+  toast('✓ Αποθηκεύτηκαν όλες οι αλλαγές','success');
+}
+
+// ─────────────────────────────────────────────────────────
+//  ΦΟΝΤΟ MODAL (Σφράγιση / Ανάκληση)
+// ─────────────────────────────────────────────────────────
+function folderApplyModalBg(){
   const modal = document.querySelector('#modal-folder .modal');
   if(!modal) return;
   const sfr = document.getElementById('if-sfragisi');
   const ana = document.getElementById('if-anaklisi');
-  const isSfr = sfr && sfr.checked;
-  const isAna = ana && ana.checked;
-  if(isSfr){
+  if(sfr&&sfr.checked){
     modal.style.background = '#fff0f0';
-    modal.style.borderTop = '4px solid #dc2626';
-  } else if(isAna){
+    modal.style.borderTop  = '4px solid #dc2626';
+  } else if(ana&&ana.checked){
     modal.style.background = '#faf5ff';
-    modal.style.borderTop = '4px solid #7c3aed';
+    modal.style.borderTop  = '4px solid #7c3aed';
   } else {
     modal.style.background = '';
-    modal.style.borderTop = '';
+    modal.style.borderTop  = '';
   }
 }
-function folderUpdateTabSaveBtns(tab){
-  const btns = {
-    'stoixeia':'folder-save-stoixeia',
-    'pistopoiitika':'folder-save-pistopoiitika',
-    'exoplismos':'folder-save-exoplismos'
-  };
-  Object.entries(btns).forEach(([t,id])=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display = t===tab ? '' : 'none';
-  });
-}
-function folderSaveAll(){
-  const dirty = Object.entries(_folderDirty).filter(([,v])=>v).map(([k])=>k);
-  if(!dirty.length){ toast('Δεν υπάρχουν αλλαγές για αποθήκευση','info'); return; }
-  dirty.forEach(tab=>{
-    if(tab==='stoixeia') folderSaveStoixeia();
-  });
-  toast('✓ Αποθηκεύτηκαν όλες οι αλλαγές','success');
-}
 
-// ══ Helpers ════════════════════════════════════════════════
-// Καλείται από openInstModal όταν ανοίγει φάκελος — χρησιμοποιεί folder ΦΑΚ
-function navToFolderTab(tab){
-  if(_folderFak) folderSwitchTab(tab);
-}
-
-// Ανοίγει φάκελο και πηγαίνει στο σωστό tab από dashboard/cross-nav
+// ─────────────────────────────────────────────────────────
+//  HELPERS — καλούνται από άλλα modules
+// ─────────────────────────────────────────────────────────
+// Cross-navigation από dashboard/protocol/etc
 function navToFolder(fak, tab='stoixeia'){
   showView('inst');
   setTimeout(()=>openFolder(fak, tab), 50);

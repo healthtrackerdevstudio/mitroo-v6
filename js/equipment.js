@@ -592,6 +592,11 @@ function closeModal(id){
   if(!el) return;
   el.classList.remove('open');
   el.style.display='none';
+  // Ενημέρωση folder tabs αν είναι ανοιχτός φάκελος
+  if(typeof _folderFak!=='undefined' && _folderFak){
+    if(id==='modal-cert' && typeof folderOnCertModalClose==='function') folderOnCertModalClose();
+    if(id==='modal-equip' && typeof folderOnEquipModalClose==='function') folderOnEquipModalClose();
+  }
 }
 // Κλείνει ΟΛΕΣ τις ac-list dropdowns — καλείται πάντα πριν ανοίξει modal
 // ── Debounce: αποτρέπει πολλαπλά renders ανά keystroke ──────────────
