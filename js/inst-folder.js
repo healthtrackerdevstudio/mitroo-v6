@@ -246,85 +246,181 @@ function folderSaveStoixeia(){
 }
 
 // ─────────────────────────────────────────────────────────
-//  TAB: ΠΙΣΤΟΠΟΙΗΤΙΚΑ
-//  Εμφανίζει τη λίστα inline + κουμπιά που ανοίγουν το
-//  υπάρχον modal-cert (πάνω από το folder modal)
+//  TAB: ΠΙΣΤΟΠΟΙΗΤΙΚΑ — πλήρως inline, χωρίς εξωτερικό modal
 // ─────────────────────────────────────────────────────────
+let _certEditId = null; // null = νέο, string = επεξεργασία υπάρχοντος
+
 function folderLoadPistopoiitikaPanel(){
   const panel = document.getElementById('folder-panel-pistopoiitika');
   if(!panel || !_folderFak) return;
-  folderRenderCertList(panel);
+  _certEditId = null;
+  folderRenderCertTab(panel);
 }
 
-function folderRenderCertList(panel){
+function folderRenderCertTab(panel){
   if(!panel) panel = document.getElementById('folder-panel-pistopoiitika');
   if(!panel) return;
   const fakCerts = certificates.filter(c=>c.fak===_folderFak)
     .sort((a,b)=>(a.type||'').localeCompare(b.type||''));
   const today = new Date(); today.setHours(0,0,0,0);
 
-  panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:13px;font-weight:600;color:var(--text)">${fakCerts.length} πιστοποιητικά για ΦΑΚ ${esc(_folderFak)}</span>
-      <button class="btn btn-primary btn-sm" onclick="folderAddNewCert()">+ Νέο Πιστοποιητικό</button>
+  // Λίστα πιστοποιητικών
+  const listHtml = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:13px;font-weight:600">${fakCerts.length} πιστοποιητικά</span>
+      <button class="btn btn-primary btn-sm" onclick="folderCertEdit(null)">+ Νέο</button>
     </div>
-    <div style="overflow-x:auto">
-    <table class="tbl" style="font-size:12px"><thead><tr>
-      <th>Τύπος</th><th>Αρ.</th><th>Έκδοση</th><th>Λήξη</th><th>Κατάσταση</th><th style="width:60px"></th>
-    </tr></thead><tbody>
-    ${fakCerts.length ? fakCerts.map(c=>{
-      const exp = c.expiry ? new Date(c.expiry) : null;
-      const expired = exp && exp < today;
-      const soonDays = exp && !expired ? Math.round((exp-today)/86400000) : -1;
-      const soon = soonDays>=0 && soonDays<=30;
-      const badge = expired ? '<span class="badge badge-red">Ληγμένο</span>'
-        : soon ? `<span class="badge badge-orange">${soonDays}μ.</span>`
-        : exp ? '<span class="badge badge-green">OK</span>' : '';
-      return `<tr style="${expired?'background:#fff5f5':''}">
-        <td style="font-weight:600">${esc(c.type||'')}</td>
-        <td class="mono muted">${esc(c.num||'—')}</td>
-        <td class="mono">${c.issue_date?fmtDate(c.issue_date):'—'}</td>
-        <td class="mono">${c.expiry?fmtDate(c.expiry):'—'}</td>
-        <td>${badge}</td>
-        <td style="white-space:nowrap">
-          <button class="btn-icon" onclick="folderEditCert('${esc(c._id||'')}')" title="Επεξεργασία">✏️</button>
-          <button class="btn-icon" onclick="folderDeleteCert('${esc(c._id||'')}')" title="Διαγραφή" style="color:#dc2626">🗑</button>
-        </td>
-      </tr>`;
-    }).join('') : '<tr><td colspan="6" class="table-empty">Δεν υπάρχουν πιστοποιητικά</td></tr>'}
-    </tbody></table></div>`;
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table class="tbl" style="font-size:12px"><thead><tr>
+        <th>Τύπος</th><th>Αρ.</th><th>Έκδοση</th><th>Λήξη</th><th>Κατάσταση</th><th style="width:60px"></th>
+      </tr></thead><tbody>
+      ${fakCerts.length ? fakCerts.map(c=>{
+        const exp = c.expiry ? new Date(c.expiry) : null;
+        const expired = exp && exp < today;
+        const soonDays = exp && !expired ? Math.round((exp-today)/86400000) : -1;
+        const soon = soonDays>=0 && soonDays<=30;
+        const badge = expired ? '<span class="badge badge-red">Ληγμένο</span>'
+          : soon ? `<span class="badge badge-orange">${soonDays}μ.</span>`
+          : exp ? '<span class="badge badge-green">OK</span>' : '';
+        const isEditing = _certEditId === c._id;
+        return `<tr style="${expired?'background:#fff5f5':''}${isEditing?';outline:2px solid var(--primary)':''}">
+          <td style="font-weight:600">${esc(c.type||'')}</td>
+          <td class="mono muted">${esc(c.num||'—')}</td>
+          <td class="mono">${c.issue_date?fmtDate(c.issue_date):'—'}</td>
+          <td class="mono">${c.expiry?fmtDate(c.expiry):'—'}</td>
+          <td>${badge}</td>
+          <td style="white-space:nowrap">
+            <button class="btn-icon" onclick="folderCertEdit('${esc(c._id||'')}')" title="Επεξεργασία">✏️</button>
+            <button class="btn-icon" onclick="folderCertDelete('${esc(c._id||'')}')" title="Διαγραφή" style="color:#dc2626">🗑</button>
+          </td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="6" class="table-empty">Δεν υπάρχουν πιστοποιητικά</td></tr>'}
+      </tbody></table>
+    </div>`;
+
+  // Inline φόρμα επεξεργασίας
+  const editC = _certEditId ? certificates.find(c=>c._id===_certEditId) : null;
+  const isNew = !_certEditId;
+  const typeOpts = buildCertTypeOptions(editC?editC.type:'');
+  const formHtml = `
+    <div style="background:${isNew?'#f0fdf4':'#fffbeb'};border:1px solid ${isNew?'#bbf7d0':'#fde68a'};border-radius:var(--radius);padding:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:${isNew?'#15803d':'#92400e'}">
+        ${isNew?'➕ Νέο Πιστοποιητικό':'✏️ Επεξεργασία: '+esc(editC?editC.type:'')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px">Τύπος <span class="req">*</span></label>
+          <select class="form-control" id="fc-type" onchange="folderCertTypeChange(this)" style="margin-top:3px">${typeOpts}</select>
+          <input class="form-control" id="fc-type-custom" placeholder="Νέος τύπος…" style="display:none;margin-top:4px" value="">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px">Αρ. Πιστοποιητικού</label>
+          <input class="form-control" id="fc-num" value="${esc(editC?editC.num||'':'')} " style="margin-top:3px">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px">Ημ. Έκδοσης</label>
+          <input class="form-control" type="date" id="fc-issue" value="${editC?editC.issue_date||'':''}" style="margin-top:3px">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px">Ημ. Λήξης</label>
+          <input class="form-control" type="date" id="fc-expiry" value="${editC?editC.expiry||'':''}" style="margin-top:3px">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px">Link εγγράφου</label>
+          <input class="form-control" id="fc-link" value="${esc(editC?editC.doc_link||'':'')} " style="margin-top:3px">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="folderCertSave()">💾 Αποθήκευση</button>
+        <button class="btn btn-secondary btn-sm" onclick="folderCertCancelEdit()">Άκυρο</button>
+      </div>
+    </div>`;
+
+  panel.innerHTML = listHtml + formHtml;
+
+  // Trim whitespace from prefilled values
+  const numEl = document.getElementById('fc-num');
+  if(numEl) numEl.value = numEl.value.trim();
+  const linkEl = document.getElementById('fc-link');
+  if(linkEl) linkEl.value = linkEl.value.trim();
 }
 
-function folderAddNewCert(){
-  // Ανοίγει το υπάρχον cert modal με προεπιλεγμένο ΦΑΚ
-  openCertModal(null, _folderFak);
-  // Μετά το κλείσιμο του cert modal, ανανέωση λίστας
-  _folderPendingCertRefresh = true;
+function folderCertTypeChange(sel){
+  const custom = document.getElementById('fc-type-custom');
+  if(custom) custom.style.display = sel.value==='__other__' ? '' : 'none';
 }
 
-function folderEditCert(id){
-  const c = certificates.find(x=>x._id===id);
-  if(!c){ toast('Δεν βρέθηκε το πιστοποιητικό','error'); return; }
-  openCertModal(c, null);
-  _folderPendingCertRefresh = true;
+function folderCertEdit(id){
+  _certEditId = id; // null = νέο
+  folderRenderCertTab();
+  // Scroll στη φόρμα
+  setTimeout(()=>{
+    const form = document.querySelector('#folder-panel-pistopoiitika [id^="fc-type"]');
+    if(form) form.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 50);
 }
 
-function folderDeleteCert(id){
+function folderCertCancelEdit(){
+  _certEditId = null;
+  folderRenderCertTab();
+}
+
+function folderCertSave(){
+  const typeSel = document.getElementById('fc-type');
+  const typeCus = document.getElementById('fc-type-custom');
+  const type = typeSel.value==='__other__' ? (typeCus?typeCus.value.trim():'') : typeSel.value;
+  if(!type){ toast('Επίλεξε τύπο πιστοποιητικού','error'); return; }
+
+  const obj = {
+    fak:        _folderFak,
+    type,
+    num:        (document.getElementById('fc-num').value||'').trim(),
+    issue_date: document.getElementById('fc-issue').value,
+    expiry:     document.getElementById('fc-expiry').value,
+    doc_link:   (document.getElementById('fc-link').value||'').trim(),
+    notes:      ''
+  };
+
+  if(_certEditId){
+    // Επεξεργασία
+    const idx = certificates.findIndex(c=>c._id===_certEditId);
+    if(idx>=0) certificates[idx] = {...certificates[idx], ...obj};
+  } else {
+    // Νέο — έλεγχος για διπλότυπο
+    const isDup = certificates.some(c=>
+      c.fak===_folderFak && c.type===type && c.num===obj.num && c.issue_date===obj.issue_date
+    );
+    if(isDup){ toast('⚠️ Υπάρχει ήδη αυτό το πιστοποιητικό','warning'); return; }
+    obj._id = uid();
+    certificates.push(obj);
+  }
+
+  save('certs', certificates);
+  try{ updateBadges(); renderCerts(); }catch(e){}
+  toast(_certEditId ? '✓ Πιστοποιητικό ενημερώθηκε' : '✓ Πιστοποιητικό προστέθηκε','success');
+  _certEditId = null;
+  folderRenderCertTab();
+}
+
+function folderCertDelete(id){
   if(!confirm('Διαγραφή πιστοποιητικού;')) return;
   certificates = certificates.filter(c=>c._id!==id);
   save('certs', certificates);
-  folderRenderCertList();
-  toast('🗑 Διαγράφηκε','info');
   try{ updateBadges(); renderCerts(); }catch(e){}
+  if(_certEditId===id) _certEditId = null;
+  folderRenderCertTab();
+  toast('🗑 Διαγράφηκε','info');
 }
 
-// Flag για ανανέωση λίστας μετά από cert modal
+// Δεν χρειάζεται πλέον εξωτερικό modal για certs
+function folderAddNewCert(){ folderCertEdit(null); }
+function folderEditCert(id){ folderCertEdit(id); }
+function folderDeleteCert(id){ folderCertDelete(id); }
 let _folderPendingCertRefresh = false;
-// Καλείται από closeModal όταν κλείνει το modal-cert
 function folderOnCertModalClose(){
   if(_folderPendingCertRefresh && _folderFak){
     _folderPendingCertRefresh = false;
-    folderRenderCertList();
+    folderRenderCertTab();
     try{ updateBadges(); renderCerts(); }catch(e){}
   }
 }
