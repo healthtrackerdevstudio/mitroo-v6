@@ -144,7 +144,7 @@ function folderLoadStoixeia(){
 
     <div class="form-group" id="vytio-row" style="display:none">
       <label>Βυτιοφόρο Όχημα</label>
-      <input class="form-control" id="if-vytio" value="${v('vytio')}" placeholder="ΑΑΑ-1234" maxlength="10" style="max-width:140px"></div>
+      <input class="form-control" id="if-vytio" value="${v('vytio')}" placeholder="ΑΑΑ-1234, ΒΒΒ-5678" maxlength="20" style="max-width:280px"></div>
 
     <div class="form-group"><label>Τελευταία Αυτοψία</label>
       <input class="form-control" type="date" id="if-autopsia" value="${v('autopsia')}" style="max-width:175px"></div>
@@ -213,6 +213,9 @@ function folderLoadStoixeia(){
     });
     if(typeof onInstTypeChange==='function') onInstTypeChange();
     folderApplyModalBg();
+    // Εμφάνιση κουμπιού εκτύπωσης στο footer
+    const printBtn = document.getElementById('folder-print-stoixeia');
+    if(printBtn) printBtn.style.display='';
   }, 80);
 }
 
@@ -557,7 +560,10 @@ function folderLoadIstoriko(){
   }
 
   panel.innerHTML=`
-    <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${history.length} κινήσεις</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--text3)">${history.length} κινήσεις</div>
+      <button class="btn btn-secondary btn-sm" onclick="folderPrintIstoriko()">🖨️ Εκτύπωση</button>
+    </div>
     <div style="overflow-x:auto">
     <table class="tbl" style="font-size:12px"><thead><tr>
       <th>Ημ. Χρέωσης</th><th>Αρ. Πρωτ. Εισ.</th><th>Αιτών</th>
@@ -580,6 +586,70 @@ function folderLoadIstoriko(){
       </tr>`;
     }).join('')}
     </tbody></table></div>`;
+}
+
+// ─────────────────────────────────────────────────────────
+//  ΕΚΤΥΠΩΣΗ ΙΣΤΟΡΙΚΟΥ
+// ─────────────────────────────────────────────────────────
+function folderPrintIstoriko(){
+  const inst = installations.find(i=>i.fak===_folderFak)||{};
+  const history = protocol.filter(p=>p.fak===_folderFak)
+    .sort((a,b)=>(b.hm_xreosis||'').localeCompare(a.hm_xreosis||''));
+
+  const win = window.open('','_blank','width=900,height=700');
+  win.document.write(`<!DOCTYPE html><html lang="el"><head><meta charset="UTF-8">
+  <title>Ιστορικό — ${esc(_folderFak)}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#111}
+    h2{font-size:16px;margin-bottom:4px}
+    .sub{font-size:12px;color:#555;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th{background:#f0f0f0;padding:6px 8px;text-align:left;border:1px solid #ccc;font-size:11px}
+    td{padding:5px 8px;border:1px solid #ddd;font-size:11px}
+    tr:nth-child(even){background:#fafafa}
+    .badge-done{color:#16a34a;font-weight:700}
+    .badge-pend{color:#d97706;font-weight:700}
+    .badge-rej{color:#dc2626;font-weight:700}
+    .badge-prog{color:#2563eb;font-weight:700}
+    .footer{margin-top:20px;font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:8px}
+    @media print{body{padding:0}}
+  </style></head><body>
+  <h2>Ιστορικό Κινήσεων Πρωτοκόλλου</h2>
+  <div class="sub">
+    ΦΑΚ: <strong>${esc(_folderFak)}</strong> — ${esc(inst.name||'')}
+    ${inst.address?'<br>'+esc(inst.address):''}
+    <br>Εκτύπωση: ${new Date().toLocaleDateString('el-GR')}
+  </div>
+  <table>
+    <thead><tr>
+      <th>Ημ. Χρέωσης</th><th>Αρ. Πρωτ. Εισ.</th><th>Αιτών</th>
+      <th>Αίτημα</th><th>Τελ.Εξ.Ενέργεια</th><th>Αρ. Πρωτ. Εξ.</th><th>Κατάσταση</th><th>Χρήστης</th>
+    </tr></thead>
+    <tbody>
+    ${history.map(p=>{
+      let status,cls;
+      if(p.rejected){status='❌ Απορρίφθηκε';cls='badge-rej';}
+      else if(p.teliko){status='✓ Ολοκλ.'+fmtDate(p.teliko);cls='badge-done';}
+      else if(p.hm_exerx){status='→ Προς Υπογραφή';cls='badge-prog';}
+      else{status='⏳ Σε Εξέλιξη';cls='badge-pend';}
+      const user = p.user ? p.user.split('@')[0] : '—';
+      return `<tr>
+        <td>${fmtDate(p.hm_xreosis)}</td>
+        <td>${esc(p.proto_eisx||'')}</td>
+        <td>${esc(p.aition||'')}</td>
+        <td>${esc(p.aitima||'')}</td>
+        <td>${esc(p.energeia||'—')}</td>
+        <td>${esc(p.proto_exerx||'')}</td>
+        <td class="${cls}">${status}</td>
+        <td>${esc(user)}</td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+  <div class="footer">Σύνολο κινήσεων: ${history.length} · Μητρώο Εγκαταστάσεων</div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // ─────────────────────────────────────────────────────────
