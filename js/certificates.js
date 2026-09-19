@@ -246,21 +246,11 @@ function openCertModal(id=null, pfFak=null){
       fakInp.value=c.fak;
       fakInp.disabled=true;
       addCertRow(c);
-      // Load autopsia για τον ΦΑΚ
-      const inst=installations.find(function(i){return i.fak===c.fak;});
-      const autoEl=document.getElementById('cf-autopsia');
-      if(autoEl) autoEl.value=inst?inst.autopsia||'':'';
     }
   } else {
     fakInp.value=pfFak||'';
-    fakInp.disabled=false;
+    fakInp.disabled=!!pfFak; // κλειδωμένο αν έρχεται από folder
     addCertRow();
-    // Load autopsia αν υπάρχει ΦΑΚ
-    if(pfFak){
-      const inst=installations.find(function(i){return i.fak===pfFak;});
-      const autoEl=document.getElementById('cf-autopsia');
-      if(autoEl) autoEl.value=inst?inst.autopsia||'':'';
-    }
   }
   openModal('modal-cert');
   const fakVal=document.getElementById('cf-fak').value;
@@ -271,12 +261,6 @@ function openCertModal(id=null, pfFak=null){
 function saveCerts(andClose=true){
   const fak=document.getElementById('cf-fak').value;
   if(!fak){toast('Επιλέξτε ΦΑΚ','error');return;}
-  const autoEl=document.getElementById('cf-autopsia');
-  if(autoEl&&autoEl.value){
-    const instIdx=installations.findIndex(function(i){return i.fak===fak;});
-    if(instIdx>=0) installations[instIdx].autopsia=autoEl.value;
-    save('inst',installations);
-  }
   const rows=[...document.querySelectorAll('.cert-row')];
   if(!rows.length){toast('Προσθέστε τουλάχιστον ένα πιστοποιητικό','error');return;}
   let saved=0,errors=0;
