@@ -11,7 +11,7 @@ let _folderFak   = null;
 let _folderTab   = 'stoixeia';
 let _folderDirty = {};
 
-const FOLDER_TABS = ['stoixeia','pistopoiitika','exoplismos','statistika','istoriko'];
+const FOLDER_TABS = ['stoixeia','pistopoiitika','exoplismos','statistika','istoriko','streetview'];
 
 // ─────────────────────────────────────────────────────────
 //  ΑΝΟΙΓΜΑ / ΚΛΕΙΣΙΜΟ ΦΑΚΕΛΟΥ
@@ -58,6 +58,7 @@ function folderSwitchTab(tab){
   if(tab==='stoixeia')        folderLoadStoixeia();
   else if(tab==='statistika') folderLoadStatistika();
   else if(tab==='istoriko')   folderLoadIstoriko();
+  else if(tab==='streetview') folderLoadStreetView();
   // Πιστοποιητικά/Εξοπλισμός: τα panels δείχνουν shortcut buttons
   else if(tab==='pistopoiitika') folderLoadPistopoiitikaPanel();
   else if(tab==='exoplismos')    folderLoadExoplismosPanel();
@@ -650,6 +651,58 @@ function folderPrintIstoriko(){
   <script>window.onload=function(){window.print();}<\/script>
   </body></html>`);
   win.document.close();
+}
+
+// ─────────────────────────────────────────────────────────
+//  TAB: STREET VIEW
+// ─────────────────────────────────────────────────────────
+function folderLoadStreetView(){
+  const panel = document.getElementById('folder-panel-streetview');
+  if(!panel || !_folderFak) return;
+  const inst = installations.find(i=>i.fak===_folderFak)||{};
+  const coords = inst.coords||'';
+
+  if(!coords){
+    panel.innerHTML=`
+      <div style="padding:40px;text-align:center;color:var(--text3)">
+        <div style="font-size:32px;margin-bottom:12px">📍</div>
+        <div style="font-size:14px;margin-bottom:8px">Δεν υπάρχουν συντεταγμένες για αυτή την εγκατάσταση</div>
+        <div style="font-size:12px">Πρόσθεσε συντεταγμένες στο tab <strong>Στοιχεία</strong> ή τοποθέτησε pin στο <strong>Χάρτη</strong></div>
+      </div>`;
+    return;
+  }
+
+  // Parsing: "lat,lng" ή "lat, lng"
+  const parts = coords.split(',').map(s=>s.trim());
+  const lat = parts[0], lng = parts[1];
+
+  if(!lat || !lng || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))){
+    panel.innerHTML=`<div style="padding:20px;color:#dc2626">⚠️ Μη έγκυρες συντεταγμένες: ${esc(coords)}</div>`;
+    return;
+  }
+
+  // Google Street View Embed URL (δωρεάν χωρίς API key για embed)
+  const svUrl = `https://www.google.com/maps?q=${lat},${lng}&layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0&output=svembed`;
+  // Εναλλακτικά: απευθείας άνοιγμα στο Google Maps Street View
+  const gmUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+
+  panel.innerHTML=`
+    <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--text3)">📍 ${esc(coords)}</span>
+      <a href="${gmUrl}" target="_blank" class="btn btn-primary btn-sm">🌍 Άνοιγμα Street View</a>
+      <a href="${mapUrl}" target="_blank" class="btn btn-secondary btn-sm">🗺️ Άνοιγμα σε Maps</a>
+    </div>
+    <div style="position:relative;width:100%;padding-bottom:60%;height:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)">
+      <iframe
+        src="https://www.google.com/maps/embed/v1/streetview?key=AIzaSyAy85ZlyBN2XhxM0YomF5e-79Hh7pXMD1I&location=${lat},${lng}&heading=0&pitch=0&fov=90"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+        allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">
+      Αν το Street View δεν εμφανίζεται, πάτα «🌍 Άνοιγμα Street View» για άνοιγμα στο Google Maps.
+    </div>`;
 }
 
 // ─────────────────────────────────────────────────────────
