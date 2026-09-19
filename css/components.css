@@ -297,3 +297,10 @@
 }
 .folder-tab:hover{color:var(--primary);background:#f1f5f9;}
 .folder-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:700;background:var(--surface);}
+
+/* Folder modal — χαμηλότερο z-index ώστε τα sub-modals
+   (cert, equip) να εμφανίζονται από πάνω */
+#modal-folder { z-index: 1050 !important; }
+/* Sub-modals πάνω από το folder modal */
+#modal-cert, #modal-equip, #modal-inst,
+#modal-proto, #modal-para-edit { z-index: 1200 !important; }
