@@ -461,30 +461,68 @@ function folderLoadExoplismosPanel(){
       <span style="font-size:13px;font-weight:600">Εξοπλισμός ΦΑΚ ${esc(_folderFak)}</span>
       <button class="btn btn-primary btn-sm" onclick="folderOpenEquipModal()">✏️ Επεξεργασία Εξοπλισμού</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+
+      <!-- Δεξαμενές -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">🛢️ ΔΕΞΑΜΕΝΕΣ</div>
-        ${activeTanks.length ? activeTanks.map(t=>`
-          <div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">
-            <span style="font-weight:600">${esc(t.fuel||'—')}</span>
-            <span style="color:var(--text3);font-size:11px"> · ${Number(t.liters||0).toLocaleString('el-GR')}L</span>
-            ${t.mitroo?`<div style="font-size:10px;color:var(--text3);font-family:monospace">${esc(t.mitroo)}</div>`:''}
-          </div>`).join('') : '<div style="font-size:12px;color:var(--text3)">Καμία</div>'}
-        ${abolishedTanks.length ? `<div style="font-size:11px;color:#dc2626;margin-top:4px">❌ ${abolishedTanks.length} κατηργημένες</div>` : ''}
-        <div style="font-size:12px;font-weight:700;margin-top:6px;color:var(--accent)">${totalL?totalL.toLocaleString('el-GR')+' L σύνολο':''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">🛢️ Δεξαμενές</div>
+        ${activeTanks.length ? `
+          <table style="width:100%;font-size:11px;border-collapse:collapse">
+            <tr style="color:var(--text3);border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:2px 4px;font-weight:600">Καύσιμο</th>
+              <th style="text-align:right;padding:2px 4px;font-weight:600">Λίτρα</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600">Ογκομ.</th>
+            </tr>
+            ${activeTanks.map(t=>`
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:3px 4px;font-weight:600">${esc(t.fuel||'—')}</td>
+              <td style="padding:3px 4px;text-align:right;color:var(--accent)">${Number(t.liters||0).toLocaleString('el-GR')}</td>
+              <td style="padding:3px 4px;color:var(--text2);font-size:10px">${esc(t.ogkom||'—')}</td>
+            </tr>`).join('')}
+            <tr style="border-top:2px solid var(--border);font-weight:700">
+              <td style="padding:4px 4px">Σύνολο</td>
+              <td style="padding:4px 4px;text-align:right;color:var(--primary)">${totalL.toLocaleString('el-GR')} L</td>
+              <td></td>
+            </tr>
+          </table>
+          ${abolishedTanks.length ? `<div style="font-size:10px;color:#dc2626;margin-top:6px">❌ ${abolishedTanks.length} κατηργημένες</div>` : ''}
+        ` : '<div style="font-size:12px;color:var(--text3)">Καμία δεξαμενή</div>'}
       </div>
+
+      <!-- Αντλίες -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">⛽ ΑΝΤΛΙΕΣ &amp; ΕΞΟΠΛΙΣΜΟΣ</div>
-        <div style="font-size:12px">${hasPumps?'✓ Αντλίες καυσίμων':'—'}</div>
-        <div style="font-size:12px">${hasPlynteria?'✓ Πλυντήριο':'—'}</div>
-        <div style="font-size:12px">${hasLipaderia?'✓ Λιπαντήριο':'—'}</div>
-        ${eq.fortistes?`<div style="font-size:12px">✓ Φορτιστές: ${esc(eq.fortistes)}</div>`:''}
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">⛽ Αντλίες</div>
+        ${(eq.pumps||[]).length ? `
+          <table style="width:100%;font-size:11px;border-collapse:collapse">
+            <tr style="color:var(--text3);border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:2px 4px;font-weight:600">#</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600">Τύπος</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600">Είδος</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600">Προϊόντα</th>
+              <th style="text-align:right;padding:2px 4px;font-weight:600">Επιστ.</th>
+            </tr>
+            ${(eq.pumps||[]).map((p,idx)=>`
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:3px 4px;color:var(--text3)">${idx+1}</td>
+              <td style="padding:3px 4px">${esc(p.type||'—')}</td>
+              <td style="padding:3px 4px">${esc(p.eidos||'—')}</td>
+              <td style="padding:3px 4px;color:var(--accent)">${esc(p.products||'—')}</td>
+              <td style="padding:3px 4px;text-align:right">${p.epistomia||'—'}</td>
+            </tr>`).join('')}
+          </table>
+        ` : eq.antlies ? `<div style="font-size:12px">Αντλίες: ${esc(eq.antlies)}</div>` : '<div style="font-size:12px;color:var(--text3)">Καμία αντλία</div>'}
       </div>
+
       ${extras.length ? `
+      <!-- Επιπλέον -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">🔧 ΕΠΙΠΛΕΟΝ</div>
-        ${extras.map(e=>`<div style="font-size:12px">✓ ${esc(e)}</div>`).join('')}
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">🔧 Επιπλέον</div>
+        ${hasPlynteria?'<div style="font-size:12px;padding:2px 0">✓ Πλυντήριο</div>':''}
+        ${hasLipaderia?'<div style="font-size:12px;padding:2px 0">✓ Λιπαντήριο</div>':''}
+        ${eq.fortistes?`<div style="font-size:12px;padding:2px 0">✓ Φορτιστές: ${esc(eq.fortistes)}</div>`:''}
+        ${extras.map(e=>`<div style="font-size:12px;padding:2px 0">✓ ${esc(e)}</div>`).join('')}
       </div>` : ''}
+
     </div>`;
 }
 
@@ -568,7 +606,7 @@ function folderLoadIstoriko(){
     <div style="overflow-x:auto">
     <table class="tbl" style="font-size:12px"><thead><tr>
       <th>Ημ. Χρέωσης</th><th>Αρ. Πρωτ. Εισ.</th><th>Αιτών</th>
-      <th>Αίτημα</th><th>Τελ.Εξ.Ενέργεια</th><th>Κατάσταση</th><th>Χρήστης</th>
+      <th>Αίτημα</th><th>Τελ.Εξ.Ενέργεια</th><th>Αρ. Πρωτ. Εξ.</th><th>Ημ. Εξ.</th><th>Κατάσταση</th><th>Χρήστης</th>
     </tr></thead><tbody>
     ${history.map(p=>{
       const phase = p.rejected ? '<span class="badge badge-red" style="font-size:10px">❌</span>'
@@ -582,6 +620,8 @@ function folderLoadIstoriko(){
         <td>${esc(p.aition||'')}</td>
         <td style="color:var(--text2)">${esc(p.aitima||'')}</td>
         <td style="color:var(--text2)">${esc(p.energeia||'—')}</td>
+        <td class="mono muted">${esc(p.proto_exerx||'—')}</td>
+        <td class="mono">${p.hm_exerx?fmtDate(p.hm_exerx):'—'}</td>
         <td>${phase}</td>
         <td style="font-size:11px;color:var(--text3)">${esc(user)}</td>
       </tr>`;
