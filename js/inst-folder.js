@@ -469,8 +469,8 @@ function folderLoadExoplismosPanel(){
         ${activeTanks.length ? `
           <table style="width:100%;font-size:11px;border-collapse:collapse">
             <tr style="color:var(--text3);border-bottom:1px solid var(--border)">
-              <th style="text-align:left;padding:2px 4px;font-weight:600">Καύσιμο</th>
-              <th style="text-align:right;padding:2px 4px;font-weight:600">Λίτρα</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600;width:90px">Καύσιμο</th>
+              <th style="text-align:right;padding:2px 4px;font-weight:600;width:70px">Λίτρα</th>
               <th style="text-align:left;padding:2px 4px;font-weight:600">Ογκομ.</th>
             </tr>
             ${activeTanks.map(t=>`
@@ -495,11 +495,11 @@ function folderLoadExoplismosPanel(){
         ${(eq.pumps||[]).length ? `
           <table style="width:100%;font-size:11px;border-collapse:collapse">
             <tr style="color:var(--text3);border-bottom:1px solid var(--border)">
-              <th style="text-align:left;padding:2px 4px;font-weight:600">#</th>
-              <th style="text-align:left;padding:2px 4px;font-weight:600">Τύπος</th>
-              <th style="text-align:left;padding:2px 4px;font-weight:600">Είδος</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600;width:20px">#</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600;width:60px">Τύπος</th>
+              <th style="text-align:left;padding:2px 4px;font-weight:600;width:55px">Είδος</th>
               <th style="text-align:left;padding:2px 4px;font-weight:600">Προϊόντα</th>
-              <th style="text-align:right;padding:2px 4px;font-weight:600">Επιστ.</th>
+              <th style="text-align:right;padding:2px 4px;font-weight:600;width:45px">Επιστ.</th>
             </tr>
             ${(eq.pumps||[]).map((p,idx)=>`
             <tr style="border-bottom:1px solid #f1f5f9">
