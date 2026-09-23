@@ -461,7 +461,7 @@ function folderLoadExoplismosPanel(){
       <span style="font-size:13px;font-weight:600">Εξοπλισμός ΦΑΚ ${esc(_folderFak)}</span>
       <button class="btn btn-primary btn-sm" onclick="folderOpenEquipModal()">✏️ Επεξεργασία Εξοπλισμού</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+    <div style="display:grid;grid-template-columns:1fr 1.4fr auto;gap:10px;align-items:start">
 
       <!-- Δεξαμενές -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
