@@ -98,109 +98,112 @@ function folderLoadStoixeia(){
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;padding:4px">
 
     <div class="form-group"><label>ΦΑΚ</label>
-      <input class="form-control" id="if-fak" value="${v('fak')}" disabled></div>
+      <input class="form-control" id="ff-fak" value="${v('fak')}" disabled></div>
 
     <div class="form-group"><label>Τμήμα / Φύλλο</label>
-      <select class="form-control" id="if-sheet" onchange="onInstTypeChange()">
+      <select class="form-control" id="ff-sheet" onchange="onInstTypeChange()">
         <option value="">—</option>
         <option${i.sheet==='inst'?' selected':''} value="inst">Εγκαταστάσεις</option>
         <option${i.sheet==='auto'?' selected':''} value="auto">Αυτοκίνητα</option>
       </select></div>
 
     <div class="form-group"><label>Τύπος Εγκατάστασης</label>
-      <select class="form-control" id="if-type" onchange="onInstTypeChange()">
+      <select class="form-control" id="ff-type" onchange="onInstTypeChange()">
         <option value="">—</option>
         ${INST_TYPES.map(t=>`<option${i.type===t?' selected':''}>${t}</option>`).join('')}
         <option value="__other__"${!INST_TYPES.includes(i.type)&&i.type?' selected':''}>Άλλο…</option>
       </select></div>
 
     <div class="form-group"><label>Άδεια Λειτουργίας — Αρ.</label>
-      <input class="form-control" id="if-adeia-num" value="${v('adeia_num')}"></div>
+      <input class="form-control" id="ff-adeia-num" value="${v('adeia_num')}"></div>
 
-    <div class="form-group" id="if-other-wrap" style="display:none">
+    <div class="form-group" id="ff-other-wrap" style="display:none">
       <label>Άλλος Τύπος</label>
-      <input class="form-control" id="if-other-type" value="${!INST_TYPES.includes(i.type)?v('type'):''}"></div>
+      <input class="form-control" id="ff-other-type" value="${!INST_TYPES.includes(i.type)?v('type'):''}"></div>
 
     <div class="form-group ff" style="grid-column:1/-1"><label>Επωνυμία <span class="req">*</span></label>
-      <input class="form-control" id="if-name" value="${v('name')}"></div>
+      <input class="form-control" id="ff-name" value="${v('name')}"></div>
 
     <div class="form-group"><label>ΑΦΜ</label>
-      <input class="form-control" id="if-afm" value="${v('afm')}"></div>
+      <input class="form-control" id="ff-afm" value="${v('afm')}"></div>
 
     <div class="form-group"><label>Περιοχή</label>
-      <input class="form-control" id="if-topothesia" value="${v('topothesia')}" list="folder-topo-list" autocomplete="off">
+      <input class="form-control" id="ff-topothesia" value="${v('topothesia')}" list="folder-topo-list" autocomplete="off">
       <datalist id="folder-topo-list">${topoList.map(t=>`<option value="${esc(t)}">`).join('')}</datalist></div>
 
     <div class="form-group ff" style="grid-column:1/-1"><label>Διεύθυνση <span class="req">*</span></label>
-      <input class="form-control" id="if-address" value="${v('address')}"></div>
+      <input class="form-control" id="ff-address" value="${v('address')}"></div>
 
     <div class="form-group"><label>Τηλέφωνο</label>
-      <input class="form-control" id="if-tel" value="${v('tel')}"></div>
+      <input class="form-control" id="ff-tel" value="${v('tel')}"></div>
 
     <div class="form-group"><label>Email</label>
-      <input class="form-control" type="email" id="if-email" value="${v('email')}"></div>
+      <input class="form-control" type="email" id="ff-email" value="${v('email')}"></div>
 
     <div class="form-group"><label>Υπεύθυνος Λειτουργίας</label>
-      <input class="form-control" id="if-ypeuthinos" value="${v('ypeuthinos')}"></div>
+      <input class="form-control" id="ff-ypeuthinos" value="${v('ypeuthinos')}"></div>
 
     <div class="form-group" id="vytio-row" style="display:none">
       <label>Βυτιοφόρο Όχημα</label>
-      <input class="form-control" id="if-vytio" value="${v('vytio')}" placeholder="ΑΑΑ-1234, ΒΒΒ-5678" maxlength="20" style="max-width:280px"></div>
+      <input class="form-control" id="ff-vytio" value="${v('vytio')}" placeholder="ΑΑΑ-1234, ΒΒΒ-5678" maxlength="20" style="max-width:280px"></div>
 
     <div class="form-group"><label>Τελευταία Αυτοψία</label>
-      <input class="form-control" type="date" id="if-autopsia" value="${v('autopsia')}" style="max-width:175px"></div>
+      <input class="form-control" type="date" id="ff-autopsia" value="${v('autopsia')}" style="max-width:175px"></div>
 
     <div class="form-group"><label>Λήξη Άδειας</label>
-      <input class="form-control" type="date" id="if-adeia-lixis" value="${v('adeia_lixis')}" style="max-width:175px"></div>
+      <input class="form-control" type="date" id="ff-adeia-lixis" value="${v('adeia_lixis')}" style="max-width:175px"></div>
+
+    <div class="form-group"><label>Συντεταγμένες</label>
+      <input class="form-control" id="ff-coords" value="${v('coords')}" placeholder="37.9xxx, 23.7xxx" title="Γεωγραφικές συντεταγμένες (lat, lng)"></div>
 
     <div class="form-group ff" style="grid-column:1/-1"><label>Σημειώσεις</label>
-      <textarea class="form-control" id="if-notes" rows="3">${v('notes')}</textarea></div>
+      <textarea class="form-control" id="ff-notes" rows="3">${v('notes')}</textarea></div>
 
     <!-- Τακτοποίηση -->
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:8px 12px;grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#15803d;white-space:nowrap;flex-shrink:0;min-width:130px">
-        <input type="checkbox" id="if-taktopoi" ${chk('taktopoi')}
-          onchange="(function(cb){const w=document.getElementById('if-taktopoi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
+        <input type="checkbox" id="ff-taktopoi" ${chk('taktopoi')}
+          onchange="(function(cb){const w=document.getElementById('ff-taktopoi-wrap');if(w)w.style.display=cb.checked?'flex':'none';})(this)">
         🗂️ Τακτοποίηση</label>
-      <div id="if-taktopoi-wrap" style="display:${i.taktopoi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
+      <div id="ff-taktopoi-wrap" style="display:${i.taktopoi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:2px">
           <label style="font-size:11px;color:var(--text3)">Αριθμός</label>
-          <input class="form-control" id="if-taktopoi-num" value="${v('taktopoi_num')}" placeholder="πχ. 12345/2026" style="width:170px"></div>
+          <input class="form-control" id="ff-taktopoi-num" value="${v('taktopoi_num')}" placeholder="πχ. 12345/2026" style="width:170px"></div>
         <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
           <label style="font-size:11px;color:var(--text3)">Νόμος</label>
-          <input class="form-control" id="if-taktopoi-nomos" value="${v('taktopoi_nomos')}" placeholder="πχ. Ν.4495/2017"></div>
+          <input class="form-control" id="ff-taktopoi-nomos" value="${v('taktopoi_nomos')}" placeholder="πχ. Ν.4495/2017"></div>
       </div>
     </div>
 
     <!-- Σφράγιση -->
     <div id="sfragisi-row" style="background:#fff5f5;border:1px solid #fecaca;border-radius:var(--radius);padding:8px 12px;grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#dc2626;white-space:nowrap;flex-shrink:0;min-width:130px">
-        <input type="checkbox" id="if-sfragisi" ${chk('sfragisi')}
-          onchange="(function(cb){const w=document.getElementById('if-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderApplyModalBg();})(this)">
+        <input type="checkbox" id="ff-sfragisi" ${chk('sfragisi')}
+          onchange="(function(cb){const w=document.getElementById('ff-sfragisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderApplyModalBg();})(this)">
         🔒 Σφράγιση</label>
-      <div id="if-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
+      <div id="ff-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:2px">
           <label style="font-size:11px;color:var(--text3)">Ημ. Σφράγισης</label>
-          <input class="form-control" type="date" id="if-sfragisi-ap" value="${v('sfragisi_ap')}" style="width:160px"></div>
+          <input class="form-control" type="date" id="ff-sfragisi-ap" value="${v('sfragisi_ap')}" style="width:160px"></div>
         <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
           <label style="font-size:11px;color:var(--text3)">Αρ. Απόφασης</label>
-          <input class="form-control" id="if-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ."></div>
+          <input class="form-control" id="ff-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ."></div>
       </div>
     </div>
 
     <!-- Ανάκληση ΑΛ -->
     <div id="anaklisi-row" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:var(--radius);padding:8px 12px;grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#7c3aed;white-space:nowrap;flex-shrink:0;min-width:130px">
-        <input type="checkbox" id="if-anaklisi" ${chk('anaklisi')}
-          onchange="(function(cb){const w=document.getElementById('if-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderApplyModalBg();})(this)">
+        <input type="checkbox" id="ff-anaklisi" ${chk('anaklisi')}
+          onchange="(function(cb){const w=document.getElementById('ff-anaklisi-wrap');if(w)w.style.display=cb.checked?'flex':'none';folderApplyModalBg();})(this)">
         🚫 Ανάκληση ΑΛ</label>
-      <div id="if-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
+      <div id="ff-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:2px">
           <label style="font-size:11px;color:var(--text3)">Ημ. Ανάκλησης</label>
-          <input class="form-control" type="date" id="if-anaklisi-ap" value="${v('anaklisi_ap')}" style="width:160px"></div>
+          <input class="form-control" type="date" id="ff-anaklisi-ap" value="${v('anaklisi_ap')}" style="width:160px"></div>
         <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
           <label style="font-size:11px;color:var(--text3)">Αρ. Απόφασης</label>
-          <input class="form-control" id="if-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ."></div>
+          <input class="form-control" id="ff-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ."></div>
       </div>
     </div>
 
@@ -224,24 +227,25 @@ function folderSaveStoixeia(){
   if(!_folderFak) return;
   const g  = id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
   const gc = id=>{ const el=document.getElementById(id); return !!(el&&el.checked); };
-  const name = g('if-name');
+  const name = g('ff-name');
   if(!name){ toast('⚠️ Η Επωνυμία είναι υποχρεωτική','error'); return; }
-  const address = g('if-address');
+  const address = g('ff-address');
   if(!address){ toast('⚠️ Η Διεύθυνση είναι υποχρεωτική','error'); return; }
   const idx = installations.findIndex(i=>i.fak===_folderFak);
   if(idx<0){ toast('Δεν βρέθηκε η εγκατάσταση','error'); return; }
-  const typeRaw = g('if-type');
-  const type = typeRaw==='__other__' ? g('if-other-type') : typeRaw;
+  const typeRaw = g('ff-type');
+  const type = typeRaw==='__other__' ? g('ff-other-type') : typeRaw;
   installations[idx] = {
     ...installations[idx],
-    sheet:g('if-sheet'), type, adeia_num:g('if-adeia-num'),
-    name, afm:g('if-afm'), topothesia:g('if-topothesia'), address,
-    tel:g('if-tel'), email:g('if-email'), ypeuthinos:g('if-ypeuthinos'),
-    vytio:g('if-vytio'), autopsia:g('if-autopsia'), adeia_lixis:g('if-adeia-lixis'),
-    notes:g('if-notes'),
-    taktopoi:gc('if-taktopoi'), taktopoi_num:g('if-taktopoi-num'), taktopoi_nomos:g('if-taktopoi-nomos'),
-    sfragisi:gc('if-sfragisi'), sfragisi_ap:g('if-sfragisi-ap'), sfragisi_ref:g('if-sfragisi-ref'),
-    anaklisi:gc('if-anaklisi'), anaklisi_ap:g('if-anaklisi-ap'), anaklisi_ref:g('if-anaklisi-ref'),
+    sheet:g('ff-sheet'), type, adeia_num:g('ff-adeia-num'),
+    name, afm:g('ff-afm'), topothesia:g('ff-topothesia'), address,
+    tel:g('ff-tel'), email:g('ff-email'), ypeuthinos:g('ff-ypeuthinos'),
+    vytio:g('ff-vytio'), autopsia:g('ff-autopsia'), adeia_lixis:g('ff-adeia-lixis'),
+    coords:g('ff-coords'),
+    notes:g('ff-notes'),
+    taktopoi:gc('ff-taktopoi'), taktopoi_num:g('ff-taktopoi-num'), taktopoi_nomos:g('ff-taktopoi-nomos'),
+    sfragisi:gc('ff-sfragisi'), sfragisi_ap:g('ff-sfragisi-ap'), sfragisi_ref:g('ff-sfragisi-ref'),
+    anaklisi:gc('ff-anaklisi'), anaklisi_ap:g('ff-anaklisi-ap'), anaklisi_ref:g('ff-anaklisi-ref'),
   };
   save('inst', installations);
   folderClearDirty('stoixeia');
@@ -761,8 +765,8 @@ function folderSaveAll(){
 function folderApplyModalBg(){
   const modal = document.querySelector('#modal-folder .modal');
   if(!modal) return;
-  const sfr = document.getElementById('if-sfragisi');
-  const ana = document.getElementById('if-anaklisi');
+  const sfr = document.getElementById('ff-sfragisi');
+  const ana = document.getElementById('ff-anaklisi');
   if(sfr&&sfr.checked){
     modal.style.background = '#fff0f0';
     modal.style.borderTop  = '4px solid #dc2626';

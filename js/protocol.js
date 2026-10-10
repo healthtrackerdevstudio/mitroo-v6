@@ -459,7 +459,7 @@ function checkFakAlerts(fak){
   // Αν η κατηγορία είναι Αυτοκίνητα → δεν υπάρχουν πιστοποιητικά εγκατάστασης
   const sheet=(document.getElementById('pf-sheet')||{value:''}).value;
   if(sheet==='Αυτοκίνητα'){
-    renderFakAlerts([]);
+    const ex=document.getElementById('proto-fak-alerts'); if(ex) ex.remove();
     return;
   }
 
@@ -734,7 +734,7 @@ function navToInst(fak){
   if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
   closeAllModals();
   showView('inst');
-  setTimeout(function(){ openInstModal(fak); }, 80);
+  setTimeout(function(){ openFolder(fak,'stoixeia'); }, 80);
 }
 
 // Από modal → πρωτόκολλο φιλτραρισμένο για τον ΦΑΚ
@@ -748,20 +748,20 @@ function navToProto(fak){
   }, 80);
 }
 
-// Από modal → πιστοποιητικά για τον ΦΑΚ
+// Από modal → πιστοποιητικά για τον ΦΑΚ (ανοίγει folder στο tab Πιστοποιητικά)
 function navToCerts(fak){
   if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
   closeAllModals();
-  showView('certs');
-  setTimeout(function(){ openCertsFakModal(fak); }, 80);
+  showView('inst');
+  setTimeout(function(){ openFolder(fak,'pistopoiitika'); }, 80);
 }
 
-// Από modal → εξοπλισμός για τον ΦΑΚ
+// Από modal → εξοπλισμός για τον ΦΑΚ (ανοίγει folder στο tab Εξοπλισμός)
 function navToEquip(fak){
   if(!fak){ toast('Δεν υπάρχει ΦΑΚ','error'); return; }
   closeAllModals();
-  showView('equip');
-  setTimeout(function(){ openEquipModal(fak); }, 80);
+  showView('inst');
+  setTimeout(function(){ openFolder(fak,'exoplismos'); }, 80);
 }
 
 // Από dashboard card → εγκαταστάσεις με φίλτρο

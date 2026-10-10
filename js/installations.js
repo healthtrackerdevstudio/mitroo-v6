@@ -85,6 +85,11 @@ function typeTag(t,sub){
 
 function openInstModal(fak=null){
   if(_serverRole==='guest'){toast('⛔ Δεν έχεις δικαίωμα','error');return;}
+  // Επεξεργασία υπάρχουσας → folder modal
+  if(fak && typeof openFolder==='function'){
+    openFolder(fak,'stoixeia');
+    return;
+  }
   closeAllAcLists();
   // Populate Περιοχή datalist from existing installation topothesia values
   const tdl=document.getElementById('topo-datalist');
