@@ -465,10 +465,10 @@ function folderLoadExoplismosPanel(){
       <span style="font-size:13px;font-weight:600">Εξοπλισμός ΦΑΚ ${esc(_folderFak)}</span>
       <button class="btn btn-primary btn-sm" onclick="folderOpenEquipModal()">✏️ Επεξεργασία Εξοπλισμού</button>
     </div>
-    <div style="display:grid;grid-template-columns:220px 280px 1fr;gap:10px;align-items:start">
+    <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:nowrap;overflow-x:auto">
 
       <!-- Δεξαμενές -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-width:200px;flex:0 0 auto">
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">🛢️ Δεξαμενές</div>
         ${activeTanks.length ? `
           <table style="width:100%;font-size:11px;border-collapse:collapse">
@@ -494,7 +494,7 @@ function folderLoadExoplismosPanel(){
       </div>
 
       <!-- Αντλίες -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-width:280px;flex:0 0 auto">
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">⛽ Αντλίες</div>
         ${(eq.pumps||[]).length ? `
           <table style="width:100%;font-size:11px;border-collapse:collapse">
@@ -519,7 +519,7 @@ function folderLoadExoplismosPanel(){
 
       ${extras.length ? `
       <!-- Επιπλέον -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-width:160px;flex:1 1 auto">
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">🔧 Επιπλέον</div>
         ${hasPlynteria?'<div style="font-size:12px;padding:2px 0">✓ Πλυντήριο</div>':''}
         ${hasLipaderia?'<div style="font-size:12px;padding:2px 0">✓ Λιπαντήριο</div>':''}
