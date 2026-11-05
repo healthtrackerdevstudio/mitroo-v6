@@ -127,7 +127,7 @@ function loadData(){
         });
         updateBadges(); renderCerts();
       });
-      fbListen('equipment',     function(d){ equipment=d;     renderEquip(); });
+      fbListen('equipment',     function(d){ equipment=d;     renderEquip(); try{renderDashFuel();}catch(e){} });
     });
     return;
   }

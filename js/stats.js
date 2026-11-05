@@ -1,5 +1,72 @@
+// ══ ΠΡΑΤΗΡΙΑ & ΑΠΟΘΕΜΑΤΑ ΚΑΥΣΙΜΩΝ (Αρχική) ══
+function renderDashFuel(){
+  const body=document.getElementById('dash-fuel-body');
+  if(!body) return;
+  const onlyActive=!!(document.getElementById('dash-fuel-active')||{}).checked;
+  const insts=installations.filter(function(i){ return !onlyActive || !(i.sfragisi||i.anaklisi); });
+  const okFaks=new Set(insts.map(function(i){return i.fak;}));
+  const cnt=function(t){ return insts.filter(function(i){return i.type===t;}).length; };
+  const simple=cnt('Πρατήριο Υγρών Καυσίμων');
+  const mixed=cnt('Μικτό Πρατήριο');
+  const container=cnt('Πρατήριο ΙΧ Container');
+  const total=simple+mixed+container;
+
+  // Χωρητικότητα ενεργών δεξαμενών ανά καύσιμο (οι κατηργημένες εξαιρούνται)
+  const byFuel={};
+  equipment.forEach(function(e){
+    if(!okFaks.has(e.fak)) return;
+    (e.tanks||[]).forEach(function(t){
+      if(t.abolished) return;
+      const lt=Number(t.liters)||0;
+      if(!t.fuel || lt<=0) return;
+      byFuel[t.fuel]=(byFuel[t.fuel]||0)+lt;
+    });
+  });
+
+  const fmt=function(n){ return Math.round(n).toLocaleString('el-GR'); };
+  const groups=[
+    {key:'Βενζίνες',  label:'Βενζίνες',          bg:'#dbeafe',bd:'#93c5fd',fuels:FUEL_CATEGORIES['Βενζίνες']},
+    {key:'Πετρέλαια', label:'Πετρέλαια',         bg:'#fef9c3',bd:'#fde68a',fuels:FUEL_CATEGORIES['Πετρέλαια']},
+    {key:'Αέρια',     label:'Υγραέριο &amp; Αέρια',bg:'#dcfce7',bd:'#86efac',fuels:FUEL_CATEGORIES['Αέρια']}
+  ];
+  const known=new Set([].concat.apply([],groups.map(function(g){return g.fuels;})));
+  const others=Object.keys(byFuel).filter(function(f){return !known.has(f);});
+  if(others.length) groups.push({key:'Λοιπά',label:'Λοιπά',bg:'#f1f5f9',bd:'#cbd5e1',fuels:others});
+
+  const stCard=function(label,val,color){
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;min-width:110px">'
+      +'<div style="font-size:11px;color:var(--text3)">'+label+'</div>'
+      +'<div style="font-size:22px;font-weight:700;color:'+color+'">'+val+'</div></div>';
+  };
+  const stations='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'
+    +stCard('Σύνολο πρατηρίων',total,'var(--primary)')
+    +stCard('Απλά (Υγρών Καυσίμων)',simple,'var(--accent)')
+    +stCard('Μικτά',mixed,'#7c3aed')
+    +stCard('ΙΧ Container',container,'#d97706')
+    +'</div>';
+
+  const stock='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">'
+    +groups.map(function(g){
+      const rows=g.fuels.filter(function(f){return byFuel[f];});
+      const sum=rows.reduce(function(a,f){return a+byFuel[f];},0);
+      return '<div style="background:'+g.bg+';border:1px solid '+g.bd+';border-radius:var(--radius);padding:10px 14px;min-width:190px">'
+        +'<div style="font-size:11px;font-weight:700;color:#1e293b">'+g.label+'</div>'
+        +'<div style="font-size:20px;font-weight:700;color:#0f172a;margin:2px 0 6px">'+fmt(sum)+' L</div>'
+        +(rows.length?rows.map(function(f){
+            return '<div style="display:flex;justify-content:space-between;gap:16px;font-size:12px;border-top:1px solid rgba(0,0,0,.07);padding:2px 0">'
+              +'<span style="font-weight:600">'+esc(f)+'</span><span>'+fmt(byFuel[f])+' L</span></div>';
+          }).join(''):'<div style="font-size:11px;color:var(--text3)">—</div>')
+        +'</div>';
+    }).join('')
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--text3);margin-top:6px">Άθροισμα χωρητικότητας ενεργών δεξαμενών (οι κατηργημένες εξαιρούνται).</div>';
+
+  body.innerHTML=stations+stock;
+}
+
 // ══ DASHBOARD ══
 function renderDash(){
+  if(typeof renderDashFuel==='function') renderDashFuel();
   // Guest: κρύψε πρωτόκολλο στην αρχική
   if(_serverRole==='guest'){
     ['s-proto','s-done','s-phase2','s-pending'].forEach(function(id){
