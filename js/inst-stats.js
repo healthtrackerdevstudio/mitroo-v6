@@ -226,7 +226,7 @@ function printInstReport(fak){
   win.document.write('<div style="text-align:right;font-size:10px;color:#888">Εκτυπώθηκε: '+new Date().toLocaleDateString('el-GR')+'<br>Τεχνικό Τμήμα Μεταφορών</div></div>');
   win.document.write(statusHtml);
   win.document.write('<h2>🏢 Στοιχεία Εγκατάστασης</h2><div class="info-grid">');
-  [['ΑΦΜ',inst.afm],['Αρ. Άδειας',inst.adeia],['Διεύθυνση',inst.address],['Περιοχή',inst.topothesia],
+  [['ΑΦΜ',inst.afm],['Αρ. Άδειας',inst.adeia||inst.adeia_num],['ΑΔΑ',inst.ada],['Διεύθυνση',inst.address],['Περιοχή',inst.topothesia],
    ['Τηλέφωνο',inst.tel],['Email',inst.email],['Υπεύθυνος',inst.ypeuthinos],['Βυτιοφόρο',inst.vytio],['Κατηγορία',inst.cat],
    ['Τελ. Αυτοψία',inst.autopsia?fmtDate(inst.autopsia):'—']
   ].forEach(function(r){if(r[1]) win.document.write('<div class="info-row"><span class="info-label">'+r[0]+':</span><span class="info-val">'+esc(r[1])+'</span></div>');});

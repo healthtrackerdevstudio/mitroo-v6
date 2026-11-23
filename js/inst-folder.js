@@ -115,7 +115,13 @@ function folderLoadStoixeia(){
       </select></div>
 
     <div class="form-group"><label>Άδεια Λειτουργίας — Αρ.</label>
-      <input class="form-control" id="ff-adeia-num" value="${v('adeia_num')}"></div>
+      <input class="form-control" id="ff-adeia-num" value="${esc(i.adeia||i.adeia_num||'')}"></div>
+
+    <div class="form-group"><label>ΑΔΑ</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="form-control" id="ff-ada" value="${v('ada')}" placeholder="πχ. 6ΩΞΤ46ΜΤΛΡ-ΧΘΒ" title="Αριθμός Διαδικτυακής Ανάρτησης (Διαύγεια)" style="text-transform:uppercase;flex:1">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="folderOpenDiavgeia()" title="Άνοιγμα της απόφασης στη Διαύγεια" style="flex:none">🔗</button>
+      </div></div>
 
     <div class="form-group" id="ff-other-wrap" style="display:none">
       <label>Άλλος Τύπος</label>
@@ -223,6 +229,13 @@ function folderLoadStoixeia(){
   }, 80);
 }
 
+function folderOpenDiavgeia(){
+  const el=document.getElementById('ff-ada');
+  const ada=el?el.value.trim().toUpperCase():'';
+  if(!ada){ toast('Δεν έχει συμπληρωθεί ΑΔΑ','info'); return; }
+  window.open('https://diavgeia.gov.gr/decision/view/'+encodeURIComponent(ada),'_blank','noopener');
+}
+
 function folderSaveStoixeia(){
   if(!_folderFak) return;
   const g  = id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
@@ -237,7 +250,7 @@ function folderSaveStoixeia(){
   const type = typeRaw==='__other__' ? g('ff-other-type') : typeRaw;
   installations[idx] = {
     ...installations[idx],
-    sheet:g('ff-sheet'), type, adeia_num:g('ff-adeia-num'),
+    sheet:g('ff-sheet'), type, adeia:g('ff-adeia-num'), adeia_num:'', ada:g('ff-ada').toUpperCase(),
     name, afm:g('ff-afm'), topothesia:g('ff-topothesia'), address,
     tel:g('ff-tel'), email:g('ff-email'), ypeuthinos:g('ff-ypeuthinos'),
     vytio:g('ff-vytio'), autopsia:g('ff-autopsia'), adeia_lixis:g('ff-adeia-lixis'),
