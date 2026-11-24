@@ -169,9 +169,9 @@ function printInstReport(fak){
   const inactive=inst.sfragisi||inst.anaklisi;
   const statusHtml=inactive?
     '<div style="background:#fee2e2;border:2px solid #ef4444;border-radius:6px;padding:10px;margin:12px 0;color:#991b1b;font-weight:600;font-size:14px">🔒 '
-    +(inst.sfragisi?'ΣΕ ΣΦΡΑΓΙΣΗ'+(inst.sfragisi_ap?' — Αρ.Απόφ.: '+inst.sfragisi_ap:''):'')
+    +(inst.sfragisi?'ΣΕ ΣΦΡΑΓΙΣΗ'+(inst.sfragisi_ap?' — Αρ.Απόφ.: '+inst.sfragisi_ap:'')+(inst.sfragisi_ada?' — ΑΔΑ: '+inst.sfragisi_ada:''):'')
     +(inst.sfragisi&&inst.anaklisi?' / ':'')
-    +(inst.anaklisi?'ΣΕ ΑΝΑΚΛΗΣΗ ΑΛ'+(inst.anaklisi_ap?' — Αρ.Απόφ.: '+inst.anaklisi_ap:''):'')
+    +(inst.anaklisi?'ΣΕ ΑΝΑΚΛΗΣΗ ΑΛ'+(inst.anaklisi_ap?' — Αρ.Απόφ.: '+inst.anaklisi_ap:'')+(inst.anaklisi_ada?' — ΑΔΑ: '+inst.anaklisi_ada:''):'')
     +'</div>':'';
 
   const equipList=[];

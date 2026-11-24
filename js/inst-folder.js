@@ -86,6 +86,15 @@ function folderClearDirty(tab){
 // ─────────────────────────────────────────────────────────
 //  TAB: ΣΤΟΙΧΕΙΑ (inline form)
 // ─────────────────────────────────────────────────────────
+// Σφράγιση/Ανάκληση: *_ap = Αρ. Απόφασης (κείμενο, όπως στο αρχικό modal),
+// *_date = ημερομηνία. Συμβατότητα με δεδομένα που αποθήκευσε ο φάκελος (v8.0–v9.5),
+// όπου το *_ap περιείχε ημερομηνία και ο αριθμός ήταν στο *_ref.
+function folderSealParts(i,kind){
+  const ap=i[kind+'_ap']||'', ref=i[kind+'_ref']||'', dt=i[kind+'_date']||'';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(ap)) return {date:dt||ap, num:ref};
+  return {date:dt, num:ap||ref};
+}
+
 function folderLoadStoixeia(){
   const panel = document.getElementById('folder-panel-stoixeia');
   if(!panel || !_folderFak) return;
@@ -93,6 +102,7 @@ function folderLoadStoixeia(){
   const v = (f,def='') => esc(i[f]||def);
   const chk = f => i[f] ? 'checked' : '';
   const topoList = [...new Set(installations.map(x=>x.topothesia).filter(Boolean))].sort();
+  const sfr=folderSealParts(i,'sfragisi'), ana=folderSealParts(i,'anaklisi');
 
   panel.innerHTML = `
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;padding:4px">
@@ -190,10 +200,16 @@ function folderLoadStoixeia(){
       <div id="ff-sfragisi-wrap" style="display:${i.sfragisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:2px">
           <label style="font-size:11px;color:var(--text3)">Ημ. Σφράγισης</label>
-          <input class="form-control" type="date" id="ff-sfragisi-ap" value="${v('sfragisi_ap')}" style="width:160px"></div>
-        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
+          <input class="form-control" type="date" id="ff-sfragisi-ap" value="${esc(sfr.date)}" style="width:160px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:none">
           <label style="font-size:11px;color:var(--text3)">Αρ. Απόφασης</label>
-          <input class="form-control" id="ff-sfragisi-ref" value="${v('sfragisi_ref')}" placeholder="Αρ. Πρωτ."></div>
+          <input class="form-control" id="ff-sfragisi-ref" value="${esc(sfr.num)}" placeholder="Αρ. Πρωτ." style="width:170px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:230px">
+          <label style="font-size:11px;color:var(--text3)">ΑΔΑ</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="form-control" id="ff-sfragisi-ada" value="${v('sfragisi_ada')}" placeholder="πχ. 6ΩΞΤ46ΜΤΛΡ-ΧΘΒ" title="ΑΔΑ της απόφασης (Διαύγεια)" style="text-transform:uppercase;flex:1">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="folderOpenDiavgeia('ff-sfragisi-ada')" title="Άνοιγμα της απόφασης στη Διαύγεια" style="flex:none">🔗</button>
+          </div></div>
       </div>
     </div>
 
@@ -206,10 +222,16 @@ function folderLoadStoixeia(){
       <div id="ff-anaklisi-wrap" style="display:${i.anaklisi?'flex':'none'};gap:10px;flex:1;align-items:flex-end;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:2px">
           <label style="font-size:11px;color:var(--text3)">Ημ. Ανάκλησης</label>
-          <input class="form-control" type="date" id="ff-anaklisi-ap" value="${v('anaklisi_ap')}" style="width:160px"></div>
-        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:180px">
+          <input class="form-control" type="date" id="ff-anaklisi-ap" value="${esc(ana.date)}" style="width:160px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:none">
           <label style="font-size:11px;color:var(--text3)">Αρ. Απόφασης</label>
-          <input class="form-control" id="ff-anaklisi-ref" value="${v('anaklisi_ref')}" placeholder="Αρ. Πρωτ."></div>
+          <input class="form-control" id="ff-anaklisi-ref" value="${esc(ana.num)}" placeholder="Αρ. Πρωτ." style="width:170px"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:230px">
+          <label style="font-size:11px;color:var(--text3)">ΑΔΑ</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="form-control" id="ff-anaklisi-ada" value="${v('anaklisi_ada')}" placeholder="πχ. 6ΩΞΤ46ΜΤΛΡ-ΧΘΒ" title="ΑΔΑ της απόφασης (Διαύγεια)" style="text-transform:uppercase;flex:1">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="folderOpenDiavgeia('ff-anaklisi-ada')" title="Άνοιγμα της απόφασης στη Διαύγεια" style="flex:none">🔗</button>
+          </div></div>
       </div>
     </div>
 
@@ -229,8 +251,8 @@ function folderLoadStoixeia(){
   }, 80);
 }
 
-function folderOpenDiavgeia(){
-  const el=document.getElementById('ff-ada');
+function folderOpenDiavgeia(id){
+  const el=document.getElementById(id||'ff-ada');
   const ada=el?el.value.trim().toUpperCase():'';
   if(!ada){ toast('Δεν έχει συμπληρωθεί ΑΔΑ','info'); return; }
   window.open('https://diavgeia.gov.gr/decision/view/'+encodeURIComponent(ada),'_blank','noopener');
@@ -257,8 +279,8 @@ function folderSaveStoixeia(){
     coords:g('ff-coords'),
     notes:g('ff-notes'),
     taktopoi:gc('ff-taktopoi'), taktopoi_num:g('ff-taktopoi-num'), taktopoi_nomos:g('ff-taktopoi-nomos'),
-    sfragisi:gc('ff-sfragisi'), sfragisi_ap:g('ff-sfragisi-ap'), sfragisi_ref:g('ff-sfragisi-ref'),
-    anaklisi:gc('ff-anaklisi'), anaklisi_ap:g('ff-anaklisi-ap'), anaklisi_ref:g('ff-anaklisi-ref'),
+    sfragisi:gc('ff-sfragisi'), sfragisi_ap:g('ff-sfragisi-ref'), sfragisi_date:g('ff-sfragisi-ap'), sfragisi_ref:'', sfragisi_ada:g('ff-sfragisi-ada').toUpperCase(),
+    anaklisi:gc('ff-anaklisi'), anaklisi_ap:g('ff-anaklisi-ref'), anaklisi_date:g('ff-anaklisi-ap'), anaklisi_ref:'', anaklisi_ada:g('ff-anaklisi-ada').toUpperCase(),
   };
   save('inst', installations);
   folderClearDirty('stoixeia');
